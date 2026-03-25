@@ -1,7 +1,13 @@
 import { GoogleGenAI } from '@google/genai'
 import { createClient } from '@supabase/supabase-js'
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+let ai: GoogleGenAI | null = null
+function getAI(): GoogleGenAI {
+  if (!ai) {
+    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+  }
+  return ai
+}
 
 export async function handleTranslate(
   body: { word?: string; language?: string },
@@ -38,7 +44,7 @@ export async function handleTranslate(
   const sourceLang = language === 'EN' ? 'English' : 'French'
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: `Translate the ${sourceLang} word "${word}" to German.
 

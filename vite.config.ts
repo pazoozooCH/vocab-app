@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vitest/config'
+import { defineConfig, loadEnv, type Plugin } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 function apiDevServer(): Plugin {
@@ -18,16 +18,18 @@ function apiDevServer(): Plugin {
         }
         const body = JSON.parse(Buffer.concat(chunks).toString())
 
-        const { handleTranslate } = await import('./api/_translate-handler')
+        // Load all env vars from .env into process.env so the handler
+        // and its dependencies (Gemini SDK, Supabase) can read them
+        const env = loadEnv('development', process.cwd(), '')
+        Object.assign(process.env, env)
 
-        const supabaseUrl = process.env.VITE_SUPABASE_URL ?? ''
-        const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY ?? ''
+        const { handleTranslate } = await import('./api/_translate-handler')
 
         const result = await handleTranslate(
           body,
           req.headers.authorization,
-          supabaseUrl,
-          supabaseAnonKey,
+          env.VITE_SUPABASE_URL ?? '',
+          env.VITE_SUPABASE_ANON_KEY ?? '',
         )
 
         res.statusCode = result.status

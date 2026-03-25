@@ -2,7 +2,7 @@ import { test as setup } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = 'http://127.0.0.1:54321'
-const SUPABASE_SECRET_KEY = '***REDACTED_SUPABASE_SECRET***'
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY ?? ''
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? ''
 const E2E_USER_ID = '00000000-0000-0000-0000-000000000088'
 const E2E_USER_EMAIL = 'e2e@test.local'
@@ -62,7 +62,7 @@ setup('authenticate', async ({ page }) => {
 
   // Reload so the app picks up the session from localStorage
   await page.goto('/')
-  await page.waitForSelector('.top-bar__title')
+  await page.waitForSelector('#app-title')
 
   await page.context().storageState({ path: 'e2e/.auth/storage-state.json' })
 })

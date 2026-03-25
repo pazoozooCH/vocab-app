@@ -60,6 +60,12 @@ Rules:
 - Use natural, everyday sentences${language === 'FR' ? '\n- French words must always include their article (un/une, le/la)' : ''}
 - Return ONLY the JSON object, no other text`
 
+  // Retry and fallback strategy for Gemini's free tier:
+  // 1. Try gemini-2.5-flash (better quality) with 2 attempts
+  // 2. If 503 (overloaded) or 429 (rate limit), fall back to gemini-2.5-flash-lite
+  //    which is faster, has higher free tier limits (1000 req/day vs 250), and lower demand
+  // 3. Each model gets 2 attempts with exponential backoff (2s, 4s)
+  // 4. Only return an error to the user if both models are exhausted
   const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite']
   const MAX_RETRIES = 2
 
@@ -94,12 +100,14 @@ Rules:
           ((err as { status: number }).status === 503 ||
             (err as { status: number }).status === 429)
 
+        // Retry with backoff if we have attempts left on this model
         if (isRetryable && attempt < MAX_RETRIES) {
           console.warn(`${model} unavailable (attempt ${attempt}/${MAX_RETRIES}), retrying...`)
           await new Promise((r) => setTimeout(r, attempt * 2000))
           continue
         }
 
+        // Fall back to the next model if this one is persistently unavailable
         if (isRetryable && model !== models[models.length - 1]) {
           console.warn(`${model} unavailable after ${MAX_RETRIES} attempts, falling back to next model...`)
           break
@@ -107,6 +115,7 @@ Rules:
 
         console.error('Translation error:', err)
 
+        // All models exhausted — return a user-friendly error
         if (isRetryable) {
           return {
             status: 503,

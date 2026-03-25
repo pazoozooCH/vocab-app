@@ -227,9 +227,10 @@ npm run dev
 Both local development and integration tests share the same local Supabase instance. Data isolation is achieved by user ID — the same way RLS works in production:
 
 - **Dev/manual testing** uses your real authenticated user ID. Data persists between sessions.
-- **Integration tests** use a dedicated test user ID (a fixed UUID). Tests clean up their own rows in `beforeEach`/`afterAll`, so dev data is never touched.
+- **Integration tests** (`npm test`) use a dedicated test user ID. Tests clean up their own rows in `beforeEach`/`afterAll`, so dev data is never touched.
+- **E2e tests** (`npm run test:e2e`) use a separate e2e user with email/password auth. A global setup creates the user, signs in server-side, and injects the session into the browser's localStorage — bypassing Google OAuth entirely.
 
-This means `npx supabase start` must be running before you run integration tests (`npm test`).
+All three use different user IDs, so they never interfere with each other. `npx supabase start` must be running for both integration and e2e tests.
 
 ### Commands
 
@@ -237,6 +238,7 @@ This means `npx supabase start` must be running before you run integration tests
 npm run dev          # Start Vite dev server (http://127.0.0.1:5173)
 npm test             # Run unit + integration tests (Vitest)
 npm run test:watch   # Run tests in watch mode
+npm run test:e2e     # Run Playwright e2e tests (headless)
 npm run lint         # ESLint + type-check
 npm run build        # Production build
 npm run format       # Prettier format all files
@@ -246,6 +248,9 @@ npm run db:stop      # Stop local Supabase
 npm run db:restart   # Restart local Supabase (picks up config changes)
 npm run db:reset     # Reset local DB and re-run all migrations
 ```
+
+To see the browser during e2e tests: `npx playwright test --headed`
+For interactive step-through mode: `npx playwright test --ui`
 
 ## Deployment
 

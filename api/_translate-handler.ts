@@ -60,52 +60,61 @@ Rules:
 - Use natural, everyday sentences${language === 'FR' ? '\n- French words must always include their article (un/une, le/la)' : ''}
 - Return ONLY the JSON object, no other text`
 
-  const MAX_RETRIES = 3
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const response = await getAI().models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      })
+  const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite']
+  const MAX_RETRIES = 2
 
-      const text = response.text?.replace(/```json\n?|\n?```/g, '').trim()
-      if (!text) {
-        return { status: 500, body: { error: 'Empty response from Gemini' } }
-      }
+  for (const model of models) {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await getAI().models.generateContent({
+          model,
+          contents: prompt,
+        })
 
-      const result = JSON.parse(text)
-
-      if (
-        !result.translations?.length ||
-        !result.sentencesSource?.length ||
-        !result.sentencesGerman?.length
-      ) {
-        return { status: 500, body: { error: 'Invalid translation response structure' } }
-      }
-
-      return { status: 200, body: result }
-    } catch (err: unknown) {
-      const isRetryable =
-        err instanceof Error &&
-        'status' in err &&
-        ((err as { status: number }).status === 503 ||
-          (err as { status: number }).status === 429)
-
-      if (isRetryable && attempt < MAX_RETRIES) {
-        console.warn(`Gemini API unavailable (attempt ${attempt}/${MAX_RETRIES}), retrying...`)
-        await new Promise((r) => setTimeout(r, attempt * 2000))
-        continue
-      }
-
-      console.error('Translation error:', err)
-
-      if (isRetryable) {
-        return {
-          status: 503,
-          body: { error: 'Translation service is temporarily busy. Please try again in a moment.' },
+        const text = response.text?.replace(/```json\n?|\n?```/g, '').trim()
+        if (!text) {
+          return { status: 500, body: { error: 'Empty response from Gemini' } }
         }
+
+        const result = JSON.parse(text)
+
+        if (
+          !result.translations?.length ||
+          !result.sentencesSource?.length ||
+          !result.sentencesGerman?.length
+        ) {
+          return { status: 500, body: { error: 'Invalid translation response structure' } }
+        }
+
+        return { status: 200, body: result }
+      } catch (err: unknown) {
+        const isRetryable =
+          err instanceof Error &&
+          'status' in err &&
+          ((err as { status: number }).status === 503 ||
+            (err as { status: number }).status === 429)
+
+        if (isRetryable && attempt < MAX_RETRIES) {
+          console.warn(`${model} unavailable (attempt ${attempt}/${MAX_RETRIES}), retrying...`)
+          await new Promise((r) => setTimeout(r, attempt * 2000))
+          continue
+        }
+
+        if (isRetryable && model !== models[models.length - 1]) {
+          console.warn(`${model} unavailable after ${MAX_RETRIES} attempts, falling back to next model...`)
+          break
+        }
+
+        console.error('Translation error:', err)
+
+        if (isRetryable) {
+          return {
+            status: 503,
+            body: { error: 'Translation service is temporarily busy. Please try again in a moment.' },
+          }
+        }
+        return { status: 500, body: { error: 'Translation failed' } }
       }
-      return { status: 500, body: { error: 'Translation failed' } }
     }
   }
 

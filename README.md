@@ -59,6 +59,17 @@ This app automates steps 2–5 into a single action.
 | Hosting     | Vercel (free tier)                  |
 | AI          | Claude API via Vercel serverless function (keeps API key server-side) |
 | Anki Export | `anki-apkg-export` or custom SQLite-based `.apkg` generator |
+| Dev Tooling | MCP servers (see below)             |
+
+### MCP Servers
+
+The following MCP servers are used during development with Claude Code:
+
+| MCP Server       | Purpose                                                       |
+|------------------|---------------------------------------------------------------|
+| **Supabase MCP** | Manage database schema, tables, RLS policies, and auth config directly from the CLI |
+| **Playwright MCP** | Run and debug Playwright e2e tests interactively             |
+| **Context7**     | Pull up-to-date documentation for React, TypeScript, Supabase, etc. into context |
 
 ### Architecture
 - **No dedicated backend** — the React app talks directly to Supabase for auth and CRUD operations

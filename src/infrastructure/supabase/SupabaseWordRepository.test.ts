@@ -1,16 +1,12 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import { SupabaseWordRepository } from './SupabaseWordRepository'
 import { Word } from '../../domain/entities/Word'
 import { Language } from '../../domain/values/Language'
 import { WordStatus } from '../../domain/values/WordStatus'
-import { createTestClient, cleanupTestData, ensureTestUser, TEST_USER_ID } from './testClient'
+import { createTestClient, cleanupTestData, TEST_USER_ID } from './testClient'
 
 const client = createTestClient()
 const repo = new SupabaseWordRepository(client)
-
-beforeAll(async () => {
-  await ensureTestUser(client)
-})
 
 function makeWord(overrides: Partial<{ id: string; word: string; status: WordStatus; deck: string }> = {}): Word {
   return Word.create({

@@ -10,5 +10,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    fileParallelism: false,
+    globalSetup: ['./src/infrastructure/supabase/testSetup.ts'],
   },
 })

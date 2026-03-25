@@ -19,8 +19,7 @@ export async function ensureTestUser(client: SupabaseClient): Promise<void> {
     email_confirm: true,
     id: TEST_USER_ID,
   })
-  // Ignore "already exists" errors from concurrent test files
-  if (error && !error.message.includes('already')) throw error
+  if (error) throw error
 }
 
 export async function cleanupTestData(client: SupabaseClient): Promise<void> {

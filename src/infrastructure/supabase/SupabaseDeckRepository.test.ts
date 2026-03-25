@@ -1,15 +1,11 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import { SupabaseDeckRepository } from './SupabaseDeckRepository'
 import { Deck } from '../../domain/entities/Deck'
 import { Language } from '../../domain/values/Language'
-import { createTestClient, cleanupTestData, ensureTestUser, TEST_USER_ID } from './testClient'
+import { createTestClient, cleanupTestData, TEST_USER_ID } from './testClient'
 
 const client = createTestClient()
 const repo = new SupabaseDeckRepository(client)
-
-beforeAll(async () => {
-  await ensureTestUser(client)
-})
 
 function makeDeck(overrides: Partial<{ id: string; name: string; language: Language }> = {}): Deck {
   return Deck.create({

@@ -1,0 +1,29 @@
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+
+const SUPABASE_LOCAL_URL = 'http://127.0.0.1:54321'
+const SUPABASE_SECRET_KEY = '***REDACTED_SUPABASE_SECRET***'
+
+export const TEST_USER_ID = '00000000-0000-0000-0000-000000000099'
+
+export function createTestClient(): SupabaseClient {
+  return createClient(SUPABASE_LOCAL_URL, SUPABASE_SECRET_KEY)
+}
+
+export async function ensureTestUser(client: SupabaseClient): Promise<void> {
+  const { data } = await client.auth.admin.getUserById(TEST_USER_ID)
+  if (data.user) return
+
+  const { error } = await client.auth.admin.createUser({
+    user_metadata: { name: 'Test User' },
+    email: 'test@test.local',
+    email_confirm: true,
+    id: TEST_USER_ID,
+  })
+  // Ignore "already exists" errors from concurrent test files
+  if (error && !error.message.includes('already')) throw error
+}
+
+export async function cleanupTestData(client: SupabaseClient): Promise<void> {
+  await client.from('words').delete().eq('user_id', TEST_USER_ID)
+  await client.from('decks').delete().eq('user_id', TEST_USER_ID)
+}

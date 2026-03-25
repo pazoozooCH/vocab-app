@@ -382,10 +382,26 @@ select:focus {
   gap: 8px;
 }
 
+.deck-selector__row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.deck-selector__row .deck-selector__select {
+  flex: 1;
+}
+
 .deck-selector__create {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.error-message--small {
+  font-size: 0.8125rem;
+  padding: 6px 10px;
+  margin-top: 4px;
 }
 
 .deck-selector__input {

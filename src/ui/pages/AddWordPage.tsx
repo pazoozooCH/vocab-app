@@ -176,6 +176,7 @@ export function AddWordPage() {
           selectedDeck={deck}
           onSelect={setDeck}
           onDeckCreated={reloadDecks}
+          onDeckDeleted={reloadDecks}
           language={language}
         />
 

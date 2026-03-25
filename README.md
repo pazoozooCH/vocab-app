@@ -282,10 +282,10 @@ On failure, Playwright saves screenshots, video, and a full trace to `test-resul
    - Deploy
 
 4. **Post-deploy**
-   - Copy the Vercel production URL (e.g. `https://vocab-app.vercel.app`)
+   - Copy the Vercel production URL (e.g. `https://vocab-app-taupe.vercel.app`)
    - Add it to Supabase → Authentication → URL Configuration → Site URL
    - Add it to Supabase → Authentication → URL Configuration → Redirect URLs
-   - Add `https://vocab-app.vercel.app` as an authorized JavaScript origin in Google Cloud Console
+   - Add `https://vocab-app-taupe.vercel.app` as an authorized JavaScript origin in Google Cloud Console
 
 ### Continuous deployment
 

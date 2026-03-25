@@ -1,4 +1,5 @@
-import { defineConfig, loadEnv, type Plugin } from 'vitest/config'
+import { defineConfig, type Plugin } from 'vitest/config'
+import { loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 function apiDevServer(): Plugin {

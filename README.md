@@ -197,7 +197,7 @@ cp .env.example .env
 # Start local Supabase (requires Docker)
 # Reads GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET from .env for local OAuth
 npx supabase start
-# Copy the printed Publishable key into .env as SUPABASE_LOCAL_ANON_KEY
+# Copy the printed Publishable key into .env as VITE_SUPABASE_ANON_KEY
 
 # Set up MCP servers for Claude Code
 source .env

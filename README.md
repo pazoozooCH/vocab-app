@@ -106,10 +106,11 @@ The following MCP servers are used during development with Claude Code:
 | exported_at      | datetime | When last exported to Anki         |
 
 ### Deck
-| Field | Type   | Description     |
-|-------|--------|-----------------|
-| id    | UUID   | Primary key     |
-| name  | string | Deck name       |
+| Field   | Type   | Description                       |
+|---------|--------|-----------------------------------|
+| id      | UUID   | Primary key                       |
+| user_id | UUID   | Foreign key → Supabase auth.users |
+| name    | string | Deck name                         |
 
 ## API
 
@@ -156,27 +157,51 @@ Phase 2:
 ## Getting Started
 
 ```bash
-# Prerequisites: Node.js 20+, npm
+# Prerequisites: Node.js 20+, npm, Docker
 
 # Install dependencies
 npm install
 
 # Set up environment
 cp .env.example .env
-# Add your keys to .env:
-#   ANTHROPIC_API_KEY     — for Claude API
-#   SUPABASE_URL          — from Supabase project settings
-#   SUPABASE_ANON_KEY     — from Supabase project settings
-#   ANTHROPIC_API_KEY is only used server-side (Vercel serverless function)
+# Fill in your keys (see .env.example for descriptions)
+
+# Start local Supabase (requires Docker)
+npx supabase start
+# Copy the printed Publishable key into .env as SUPABASE_LOCAL_ANON_KEY
+
+# Set up MCP servers for Claude Code
+source .env
+claude mcp add supabase \
+  -e SUPABASE_ACCESS_TOKEN=$SUPABASE_ACCESS_TOKEN \
+  -e SUPABASE_PROJECT_REF=$SUPABASE_PROJECT_REF \
+  -- npx -y @supabase/mcp-server-supabase@latest
 
 # Start development
 npm run dev
 ```
 
+### Environments
+
+| Environment | Database | URL | Purpose |
+|-------------|----------|-----|---------|
+| Local | Local Supabase (Docker) | `http://127.0.0.1:54321` | Development and testing |
+| Production | Supabase Cloud | `https://<project-ref>.supabase.co` | Live app |
+
+- **Local**: started with `npx supabase start`, stopped with `npx supabase stop`. Data can be reset with `npx supabase db reset`.
+- **Production**: cloud project, migrations applied with `npx supabase db push`.
+- Migrations live in `supabase/migrations/` and are developed locally first, then pushed to production.
+
 ## Deployment
 
 1. Create a Supabase project at https://supabase.com (free tier)
-2. Enable Google OAuth in Supabase → Authentication → Providers
+   - Enable the **Data API** (required — the frontend uses the Supabase client SDK which communicates via PostgREST)
+   - Enable **automatic RLS** (ensures every new table has Row Level Security enabled by default)
+2. In Supabase → Authentication → Providers: enable **Google OAuth** and disable **Email auth** (enabled by default, not needed)
+   - Create a Google Cloud project (free) at [Google Cloud Console](https://console.cloud.google.com/) (any Google account works)
+   - Go to APIs & Credentials → Create OAuth Client ID (application type: Web application)
+   - Set the authorized redirect URI to your Supabase callback URL (`https://<project-ref>.supabase.co/auth/v1/callback`)
+   - Copy the **Client ID** and **Client Secret** into the Supabase Google provider settings
 3. Run the database migrations (SQL in `supabase/migrations/`)
 4. Deploy to Vercel: connect the GitHub repo, set environment variables
 5. Add the Vercel URL to Supabase → Authentication → URL Configuration

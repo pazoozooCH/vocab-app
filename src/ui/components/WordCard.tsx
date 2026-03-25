@@ -1,11 +1,18 @@
 import { useState } from 'react'
 import type { Word } from '../../domain/entities/Word'
 
-function renderBold(text: string) {
-  const parts = text.split(/\*\*(.+?)\*\*/)
-  return parts.map((part, i) =>
-    i % 2 === 1 ? <strong key={i}>{part}</strong> : part,
-  )
+function renderMarkdown(text: string) {
+  // Split on **bold** and _italic_ patterns, preserving delimiters as capture groups
+  const tokens = text.split(/(\*\*.+?\*\*|_.+?_)/)
+  return tokens.map((token, i) => {
+    if (token.startsWith('**') && token.endsWith('**')) {
+      return <strong key={i}>{token.slice(2, -2)}</strong>
+    }
+    if (token.startsWith('_') && token.endsWith('_') && !token.startsWith('__')) {
+      return <em key={i}>{token.slice(1, -1)}</em>
+    }
+    return token
+  })
 }
 
 interface WordCardProps {
@@ -42,15 +49,17 @@ export function WordCard({ word, onDelete, onRefine }: WordCardProps) {
       </div>
 
       <div className="word-card__translations">
-        {word.translations.join(', ')}
+        {word.translations.map((t, i) => (
+          <span key={i}>{i > 0 && ', '}{renderMarkdown(t)}</span>
+        ))}
       </div>
 
       <div className="word-card__sentences">
         {word.sentencesSource.map((s, i) => (
-          <div key={`src-${i}`} className="word-card__sentence">{renderBold(s)}</div>
+          <div key={`src-${i}`} className="word-card__sentence">{renderMarkdown(s)}</div>
         ))}
         {word.sentencesGerman.map((s, i) => (
-          <div key={`de-${i}`} className="word-card__sentence">{renderBold(s)}</div>
+          <div key={`de-${i}`} className="word-card__sentence">{renderMarkdown(s)}</div>
         ))}
       </div>
 

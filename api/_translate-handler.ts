@@ -49,13 +49,14 @@ export async function handleTranslate(
 
 Return a JSON object with exactly this structure:
 {
-  "translations": ["German translation 1", "German translation 2"],
+  "translations": ["German translation 1 _[classifier]_", "German translation 2"],
   "sentencesSource": ["1. ${sourceLang} sentence with **${word}** bolded", "2. ${sourceLang} sentence with **${word}** bolded"],
   "sentencesGerman": ["1. German sentence with **translation** bolded", "2. German sentence with **translation** bolded"]
 }
 
 Rules:
 - Include all common German translations (usually 1-3)
+- Where appropriate, add a domain/register classifier after the translation in italic markdown: _[Law]_, _[Med]_, _[Tech]_, _[Coll]_, _[Brit]_, _[Amer]_, _[Hist]_, _[Fig]_, _[Fin]_, etc. Only add classifiers when the meaning is domain-specific or register-specific — omit for common everyday meanings.
 - Generate 2-3 sample sentences in ${sourceLang} and their German translations
 - Number each sentence with an ordinal prefix (1., 2., 3.)
 - Bold the vocabulary word in each sentence using **markdown bold**

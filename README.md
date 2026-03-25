@@ -79,6 +79,34 @@ The following MCP servers are used during development with Claude Code:
 - **Vercel** free tier: generous for personal use, zero config deployment
 - Both are free for a single-user personal app
 
+### Project Structure (Clean Architecture + DDD)
+
+The codebase follows Clean Architecture with Domain-Driven Design. Inner layers have no dependencies on outer layers — all dependencies point inward.
+
+```
+src/
+├── domain/              # Inner layer — pure business logic, no external dependencies
+│   ├── entities/        # Word, Deck — core objects with identity and behavior
+│   └── values/          # Language (EN|FR), WordStatus (pending|exported) — immutable types
+│
+├── application/         # Use cases — orchestrate domain objects to fulfill user actions
+│   ├── usecases/        # addWord (translate + save), exportDeck (mark exported + return)
+│   └── ports/           # Interfaces that the outer layers must implement
+│                        #   WordRepository, DeckRepository, TranslationService
+│
+├── infrastructure/      # Outer layer — implements ports with real services
+│   └── supabase/        # Supabase implementations of repository interfaces
+│
+└── ui/                  # React components, pages, hooks — calls use cases, never infra directly
+```
+
+**Key ideas:**
+- **Entities** (`Word`, `Deck`) are immutable and created via factory methods (`Word.create()`). Mutations return new instances (e.g. `word.markExported()`).
+- **Value objects** (`Language`, `WordStatus`) are simple constrained types with no identity.
+- **Ports** define what the application needs (e.g. "save a word", "translate a word") without knowing how.
+- **Use cases** are plain functions that take input + dependencies (ports) and return results. Easy to test with mocks.
+- **Infrastructure** is the only layer that knows about Supabase, the Claude API, etc.
+
 ### Authentication & Access Control
 - Google OAuth login via Supabase Auth
 - **Email whitelist**: only pre-approved email addresses can use the app

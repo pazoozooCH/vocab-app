@@ -43,6 +43,7 @@ export function DeckSelector({
   return (
     <div className="deck-selector">
       <select
+        id="deck-select"
         className="deck-selector__select"
         value={selectedDeck}
         onChange={(e) => {
@@ -70,6 +71,7 @@ export function DeckSelector({
       {isCreating && (
         <div className="deck-selector__create">
           <input
+            id="new-deck-input"
             className="deck-selector__input"
             type="text"
             placeholder="e.g. English::Vocabulary or French::Verbs"
@@ -78,10 +80,11 @@ export function DeckSelector({
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             autoFocus
           />
-          <button className="btn btn--small" onClick={handleCreate}>
+          <button id="create-deck-btn" className="btn btn--small" onClick={handleCreate}>
             Create
           </button>
           <button
+            id="cancel-deck-btn"
             className="btn btn--small btn--ghost"
             onClick={() => setIsCreating(false)}
           >

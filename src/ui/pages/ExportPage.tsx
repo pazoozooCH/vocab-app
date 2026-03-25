@@ -50,7 +50,7 @@ export function ExportPage() {
 
       {deck && (
         <>
-          <div className="export-summary">
+          <div id="export-summary" className="export-summary">
             {loading ? (
               'Loading…'
             ) : (
@@ -61,6 +61,7 @@ export function ExportPage() {
           {!loading && words.length > 0 && (
             <>
               <button
+                id="export-btn"
                 className="btn btn--primary"
                 onClick={handleExport}
                 disabled={exporting}
@@ -77,7 +78,7 @@ export function ExportPage() {
           )}
 
           {exportedCount !== null && (
-            <div className="success-message">
+            <div id="export-success" className="success-message">
               Marked {exportedCount} word{exportedCount !== 1 ? 's' : ''} as exported.
               .apkg download coming soon.
             </div>

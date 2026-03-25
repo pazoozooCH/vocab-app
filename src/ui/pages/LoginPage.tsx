@@ -19,7 +19,7 @@ export function LoginPage() {
         <p className="login-card__subtitle">
           Collect vocabulary, get AI translations, export to Anki.
         </p>
-        <button className="btn btn--primary btn--large" onClick={signIn}>
+        <button id="sign-in-btn" className="btn btn--primary btn--large" onClick={signIn}>
           Sign in with Google
         </button>
       </div>

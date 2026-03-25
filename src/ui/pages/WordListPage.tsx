@@ -39,18 +39,21 @@ export function WordListPage() {
 
         <div className="status-filter">
           <button
+            id="filter-all"
             className={`status-filter__btn ${status === '' ? 'status-filter__btn--active' : ''}`}
             onClick={() => setStatus('')}
           >
             All
           </button>
           <button
+            id="filter-pending"
             className={`status-filter__btn ${status === WordStatusEnum.Pending ? 'status-filter__btn--active' : ''}`}
             onClick={() => setStatus(WordStatusEnum.Pending)}
           >
             Pending
           </button>
           <button
+            id="filter-exported"
             className={`status-filter__btn ${status === WordStatusEnum.Exported ? 'status-filter__btn--active' : ''}`}
             onClick={() => setStatus(WordStatusEnum.Exported)}
           >
@@ -62,9 +65,9 @@ export function WordListPage() {
       {loading ? (
         <div className="loading-text">Loading…</div>
       ) : words.length === 0 ? (
-        <div className="empty-state">No words found.</div>
+        <div id="empty-state" className="empty-state">No words found.</div>
       ) : (
-        <div className="word-list">
+        <div id="word-list" className="word-list">
           {words.map((w) => (
             <WordCard key={w.id} word={w} onDelete={handleDelete} />
           ))}

@@ -43,6 +43,7 @@ export function AddWordPage() {
       <form className="add-word-form" onSubmit={handleSubmit}>
         <div className="language-toggle">
           <button
+            id="lang-en"
             type="button"
             className={`language-toggle__btn ${language === Language.EN ? 'language-toggle__btn--active' : ''}`}
             onClick={() => { setLanguage(Language.EN); setDeck('') }}
@@ -50,6 +51,7 @@ export function AddWordPage() {
             EN
           </button>
           <button
+            id="lang-fr"
             type="button"
             className={`language-toggle__btn ${language === Language.FR ? 'language-toggle__btn--active' : ''}`}
             onClick={() => { setLanguage(Language.FR); setDeck('') }}
@@ -59,6 +61,7 @@ export function AddWordPage() {
         </div>
 
         <input
+          id="word-input"
           className="add-word-form__input"
           type="text"
           placeholder="Enter a word…"
@@ -77,6 +80,7 @@ export function AddWordPage() {
         />
 
         <button
+          id="add-word-btn"
           className="btn btn--primary"
           type="submit"
           disabled={isLoading || !word.trim() || !deck}
@@ -85,10 +89,10 @@ export function AddWordPage() {
         </button>
       </form>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div id="error-message" className="error-message">{error}</div>}
 
       {lastResult && (
-        <div className="add-word-result">
+        <div id="add-word-result" className="add-word-result">
           <h3>Added</h3>
           <WordCard word={lastResult} />
         </div>

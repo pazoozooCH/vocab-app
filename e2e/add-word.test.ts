@@ -35,19 +35,19 @@ test.describe('Add Word flow', () => {
     await page.goto('/')
 
     // Select EN language (default, but be explicit)
-    await page.click('.language-toggle__btn:has-text("EN")')
+    await page.click('#lang-en')
 
     // Create a deck first
-    await page.selectOption('.deck-selector__select', '__new__')
-    await page.locator('.deck-selector__input').fill('English::Test')
-    await page.click('.deck-selector__create .btn:has-text("Create")')
+    await page.selectOption('#deck-select', '__new__')
+    await page.locator('#new-deck-input').fill('English::Test')
+    await page.click('#create-deck-btn')
 
     // Type a word and submit
-    await page.locator('.add-word-form__input').fill('hello')
-    await page.click('.btn--primary:has-text("Add Word")')
+    await page.locator('#word-input').fill('hello')
+    await page.click('#add-word-btn')
 
     // Verify the translation result appears
-    const result = page.locator('.add-word-result')
+    const result = page.locator('#add-word-result')
     await expect(result).toBeVisible()
     await expect(result.locator('.word-card__word')).toHaveText('hello')
     await expect(result.locator('.word-card__translations')).toHaveText('hallo')
@@ -59,7 +59,7 @@ test.describe('Add Word flow', () => {
     await expect(sentences).toHaveCount(4)
 
     // Verify the input is cleared for the next word
-    await expect(page.locator('.add-word-form__input')).toHaveValue('')
+    await expect(page.locator('#word-input')).toHaveValue('')
   })
 
   test('add a French word with article', async ({ page }) => {
@@ -86,19 +86,19 @@ test.describe('Add Word flow', () => {
     await page.goto('/')
 
     // Switch to French
-    await page.click('.language-toggle__btn:has-text("FR")')
+    await page.click('#lang-fr')
 
     // Create a French deck
-    await page.selectOption('.deck-selector__select', '__new__')
-    await page.locator('.deck-selector__input').fill('French::Test')
-    await page.click('.deck-selector__create .btn:has-text("Create")')
+    await page.selectOption('#deck-select', '__new__')
+    await page.locator('#new-deck-input').fill('French::Test')
+    await page.click('#create-deck-btn')
 
     // Type a word and submit
-    await page.locator('.add-word-form__input').fill('un chien')
-    await page.click('.btn--primary:has-text("Add Word")')
+    await page.locator('#word-input').fill('un chien')
+    await page.click('#add-word-btn')
 
     // Verify result
-    const result = page.locator('.add-word-result')
+    const result = page.locator('#add-word-result')
     await expect(result).toBeVisible()
     await expect(result.locator('.word-card__word')).toHaveText('un chien')
     await expect(result.locator('.badge--fr')).toHaveText('FR')
@@ -115,19 +115,19 @@ test.describe('Add Word flow', () => {
     })
 
     await page.goto('/')
-    await page.click('.language-toggle__btn:has-text("EN")')
+    await page.click('#lang-en')
 
     // Create a deck
-    await page.selectOption('.deck-selector__select', '__new__')
-    await page.locator('.deck-selector__input').fill('English::Errors')
-    await page.click('.deck-selector__create .btn:has-text("Create")')
+    await page.selectOption('#deck-select', '__new__')
+    await page.locator('#new-deck-input').fill('English::Errors')
+    await page.click('#create-deck-btn')
 
     // Type a word and submit
-    await page.locator('.add-word-form__input').fill('test')
-    await page.click('.btn--primary:has-text("Add Word")')
+    await page.locator('#word-input').fill('test')
+    await page.click('#add-word-btn')
 
     // Verify error message is shown
-    await expect(page.locator('.error-message')).toContainText('temporarily busy')
+    await expect(page.locator('#error-message')).toContainText('temporarily busy')
   })
 
   test('added word appears in the word list', async ({ page }) => {
@@ -135,16 +135,16 @@ test.describe('Add Word flow', () => {
     await page.goto('/')
 
     // Create deck and add a word
-    await page.click('.language-toggle__btn:has-text("EN")')
-    await page.selectOption('.deck-selector__select', '__new__')
-    await page.locator('.deck-selector__input').fill('English::ListTest')
-    await page.click('.deck-selector__create .btn:has-text("Create")')
-    await page.locator('.add-word-form__input').fill('hello')
-    await page.click('.btn--primary:has-text("Add Word")')
-    await expect(page.locator('.add-word-result')).toBeVisible()
+    await page.click('#lang-en')
+    await page.selectOption('#deck-select', '__new__')
+    await page.locator('#new-deck-input').fill('English::ListTest')
+    await page.click('#create-deck-btn')
+    await page.locator('#word-input').fill('hello')
+    await page.click('#add-word-btn')
+    await expect(page.locator('#add-word-result')).toBeVisible()
 
     // Navigate to word list
-    await page.click('.bottom-nav__tab:has-text("Words")')
+    await page.click('#nav-words')
 
     // Verify the word appears
     await expect(page.locator('.word-card__word').first()).toHaveText('hello')

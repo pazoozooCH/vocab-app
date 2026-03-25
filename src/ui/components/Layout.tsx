@@ -7,8 +7,8 @@ export function Layout() {
   return (
     <div className="layout">
       <header className="top-bar">
-        <h1 className="top-bar__title">Vocab</h1>
-        <button className="top-bar__signout" onClick={signOut}>
+        <h1 id="app-title" className="top-bar__title">Vocab</h1>
+        <button id="sign-out-btn" className="top-bar__signout" onClick={signOut}>
           Sign out
         </button>
       </header>
@@ -18,15 +18,15 @@ export function Layout() {
       </main>
 
       <nav className="bottom-nav">
-        <NavLink to="/" end className="bottom-nav__tab">
+        <NavLink to="/" end id="nav-add" className="bottom-nav__tab">
           <span className="bottom-nav__icon">+</span>
           <span className="bottom-nav__label">Add</span>
         </NavLink>
-        <NavLink to="/words" className="bottom-nav__tab">
+        <NavLink to="/words" id="nav-words" className="bottom-nav__tab">
           <span className="bottom-nav__icon">☰</span>
           <span className="bottom-nav__label">Words</span>
         </NavLink>
-        <NavLink to="/export" className="bottom-nav__tab">
+        <NavLink to="/export" id="nav-export" className="bottom-nav__tab">
           <span className="bottom-nav__icon">↓</span>
           <span className="bottom-nav__label">Export</span>
         </NavLink>

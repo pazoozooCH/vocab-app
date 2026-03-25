@@ -51,6 +51,7 @@ src/
 - **E2E tests**: Playwright for critical user flows (add word, export deck, login)
   - E2E tests live in `e2e/` directory
   - Run against a local or staging environment
+  - Use element IDs (`#my-element`) to select DOM elements whenever possible — avoids brittle CSS class selectors
 - Run tests before committing: `npm test`
 - Run e2e tests: `npm run test:e2e`
 

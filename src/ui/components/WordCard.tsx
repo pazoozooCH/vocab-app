@@ -1,19 +1,7 @@
 import { useState } from 'react'
 import type { Word } from '../../domain/entities/Word'
-
-function renderMarkdown(text: string) {
-  // Split on **bold** and _italic_ patterns, preserving delimiters as capture groups
-  const tokens = text.split(/(\*\*.+?\*\*|_.+?_)/)
-  return tokens.map((token, i) => {
-    if (token.startsWith('**') && token.endsWith('**')) {
-      return <strong key={i}>{token.slice(2, -2)}</strong>
-    }
-    if (token.startsWith('_') && token.endsWith('_') && !token.startsWith('__')) {
-      return <em key={i}>{token.slice(1, -1)}</em>
-    }
-    return token
-  })
-}
+import { renderMarkdown } from './renderMarkdown'
+import { WordRow } from './WordRow'
 
 interface WordCardProps {
   word: Word
@@ -100,15 +88,7 @@ export function WordCard({ word, duplicates, onDelete, onRefine }: WordCardProps
         <div className="word-card__duplicates">
           <div className="word-card__duplicates-title">Potential duplicates:</div>
           {duplicates.map((d) => (
-            <div key={d.id} className="word-card__duplicate">
-              <span className="word-card__duplicate-word">{renderMarkdown(d.word)}</span>
-              <span className="word-card__duplicate-translations">
-                {d.translations.map((t, i) => (
-                  <span key={i}>{i > 0 && ', '}{renderMarkdown(t)}</span>
-                ))}
-              </span>
-              <span className="word-card__duplicate-deck">{d.deck}</span>
-            </div>
+            <WordRow key={d.id} word={d} />
           ))}
         </div>
       )}

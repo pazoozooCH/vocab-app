@@ -48,7 +48,7 @@ test('shows potential duplicates when adding a word that already exists', async 
   await dupeBtn.click()
   const dupeSection = page.locator('.word-card__duplicates')
   await expect(dupeSection).toBeVisible()
-  await expect(dupeSection.locator('.word-card__duplicate-word')).toContainText('duplicatetest')
+  await expect(dupeSection.locator('.word-row__word')).toContainText('duplicatetest')
 
   // Click again to hide
   await dupeBtn.click()

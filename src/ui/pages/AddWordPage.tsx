@@ -7,7 +7,7 @@ import { useAuth, useServices } from '../context/AppContext'
 import { useDecks } from '../hooks/useDecks'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { DeckSelector } from '../components/DeckSelector'
-import { WordCard } from '../components/WordCard'
+import { ExpandableWordRow } from '../components/ExpandableWordRow'
 
 type InputMode = 'single' | 'batch'
 
@@ -249,7 +249,7 @@ export function AddWordPage() {
         <div id="add-word-result" className="add-word-result">
           <h3>Added ({results.length})</h3>
           {results.map((w) => (
-            <WordCard key={w.id} word={w} duplicates={duplicatesMap[w.id]} onRefine={handleRefine} onDelete={handleDelete} />
+            <ExpandableWordRow key={w.id} word={w} defaultExpanded duplicates={duplicatesMap[w.id]} onRefine={handleRefine} onDelete={handleDelete} />
           ))}
         </div>
       )}

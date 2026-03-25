@@ -437,6 +437,64 @@ select:focus {
   gap: 4px;
 }
 
+/* Word Row — compact single-line view */
+
+.word-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 6px 0;
+  font-size: 0.875rem;
+}
+
+.word-row__word {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.word-row__translations {
+  color: var(--color-text-muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.word-row__deck {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Expandable Word Row */
+
+.expandable-word-row--collapsed {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 4px 12px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.expandable-word-row--collapsed:hover {
+  border-color: var(--color-primary);
+}
+
+.expandable-word-row__collapse {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+/* Duplicates section inside word card */
+
 .word-card__duplicates {
   margin-top: 8px;
   padding: 8px;
@@ -452,25 +510,8 @@ select:focus {
   margin-bottom: 4px;
 }
 
-.word-card__duplicate {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
+.word-card__duplicates .word-row {
   padding: 2px 0;
-}
-
-.word-card__duplicate-word {
-  font-weight: 600;
-}
-
-.word-card__duplicate-translations {
-  color: var(--color-text-muted);
-}
-
-.word-card__duplicate-deck {
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-  margin-left: auto;
 }
 
 .btn--warn {

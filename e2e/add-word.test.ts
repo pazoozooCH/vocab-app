@@ -205,8 +205,8 @@ test.describe('Add Word flow', () => {
     // Navigate to word list
     await page.click('#nav-words')
 
-    // Verify the word appears
-    await expect(page.locator('.word-card__word').first()).toHaveText('hello')
+    // Verify the word appears in compact row view
+    await expect(page.locator('.word-row__word').first()).toHaveText('hello')
   })
 
   test('delete a word from the add page result', async ({ page }) => {
@@ -247,6 +247,13 @@ test.describe('Add Word flow', () => {
 
     // Navigate to word list
     await page.click('#nav-words')
+
+    // Word should appear as a compact row
+    const wordRow = page.locator('.expandable-word-row--collapsed').filter({ hasText: 'hello' })
+    await expect(wordRow).toBeVisible()
+
+    // Expand it to reveal the full card with delete button
+    await wordRow.click()
     const wordCard = page.locator('.word-card').filter({ hasText: 'English::DeleteList' })
     await expect(wordCard).toBeVisible()
 
@@ -256,7 +263,7 @@ test.describe('Add Word flow', () => {
     // Delete from word list
     await wordCard.locator('.btn--danger').click()
 
-    // That specific word card should be gone
-    await expect(wordCard).not.toBeVisible()
+    // The row should be gone
+    await expect(wordRow).not.toBeVisible()
   })
 })

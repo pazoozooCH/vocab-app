@@ -6,7 +6,7 @@ import { useDecks } from '../hooks/useDecks'
 import { useWords } from '../hooks/useWords'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { DeckSelector } from '../components/DeckSelector'
-import { WordCard } from '../components/WordCard'
+import { ExpandableWordRow } from '../components/ExpandableWordRow'
 import type { Word } from '../../domain/entities/Word'
 
 export function WordListPage() {
@@ -70,7 +70,7 @@ export function WordListPage() {
       ) : (
         <div id="word-list" className="word-list">
           {words.map((w) => (
-            <WordCard key={w.id} word={w} onDelete={handleDelete} />
+            <ExpandableWordRow key={w.id} word={w} onDelete={handleDelete} />
           ))}
         </div>
       )}

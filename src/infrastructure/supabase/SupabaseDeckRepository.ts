@@ -17,7 +17,11 @@ function toDomain(row: DeckRow): Deck {
 }
 
 export class SupabaseDeckRepository implements DeckRepository {
-  constructor(private readonly client: SupabaseClient) {}
+  readonly client: SupabaseClient
+
+  constructor(client: SupabaseClient) {
+    this.client = client
+  }
 
   async save(deck: Deck): Promise<void> {
     const { error } = await this.client.from('decks').insert({

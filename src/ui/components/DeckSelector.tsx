@@ -1,0 +1,90 @@
+import { useState } from 'react'
+import { Deck } from '../../domain/entities/Deck'
+import { useAuth, useServices } from '../context/AppContext'
+
+interface DeckSelectorProps {
+  decks: Deck[]
+  selectedDeck: string
+  onSelect: (deck: string) => void
+  onDeckCreated?: () => void
+  allowAll?: boolean
+}
+
+export function DeckSelector({
+  decks,
+  selectedDeck,
+  onSelect,
+  onDeckCreated,
+  allowAll,
+}: DeckSelectorProps) {
+  const { deckRepository } = useServices()
+  const { user } = useAuth()
+  const [isCreating, setIsCreating] = useState(false)
+  const [newDeckName, setNewDeckName] = useState('')
+
+  const handleCreate = async () => {
+    if (!user || !newDeckName.trim()) return
+    const deck = Deck.create({
+      id: crypto.randomUUID(),
+      userId: user.id,
+      name: newDeckName.trim(),
+    })
+    await deckRepository.save(deck)
+    setNewDeckName('')
+    setIsCreating(false)
+    onDeckCreated?.()
+    onSelect(deck.name)
+  }
+
+  return (
+    <div className="deck-selector">
+      <select
+        className="deck-selector__select"
+        value={selectedDeck}
+        onChange={(e) => {
+          if (e.target.value === '__new__') {
+            setIsCreating(true)
+          } else {
+            onSelect(e.target.value)
+          }
+        }}
+      >
+        {allowAll && <option value="">All decks</option>}
+        {!allowAll && !selectedDeck && (
+          <option value="" disabled>
+            Select a deck…
+          </option>
+        )}
+        {decks.map((d) => (
+          <option key={d.id} value={d.name}>
+            {d.name}
+          </option>
+        ))}
+        <option value="__new__">+ New deck</option>
+      </select>
+
+      {isCreating && (
+        <div className="deck-selector__create">
+          <input
+            className="deck-selector__input"
+            type="text"
+            placeholder="Deck name"
+            value={newDeckName}
+            onChange={(e) => setNewDeckName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            autoFocus
+          />
+          <button className="btn btn--small" onClick={handleCreate}>
+            Create
+          </button>
+          <button
+            className="btn btn--small btn--ghost"
+            onClick={() => setIsCreating(false)}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

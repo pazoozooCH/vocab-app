@@ -36,7 +36,11 @@ function toDomain(row: WordRow): Word {
 }
 
 export class SupabaseWordRepository implements WordRepository {
-  constructor(private readonly client: SupabaseClient) {}
+  readonly client: SupabaseClient
+
+  constructor(client: SupabaseClient) {
+    this.client = client
+  }
 
   async save(word: Word): Promise<void> {
     const { error } = await this.client.from('words').insert({

@@ -1,0 +1,16 @@
+{
+  "name": "Vocab",
+  "short_name": "Vocab",
+  "description": "Collect vocabulary with AI translations and export to Anki",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

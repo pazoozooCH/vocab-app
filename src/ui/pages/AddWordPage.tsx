@@ -119,25 +119,6 @@ export function AddWordPage() {
 
   return (
     <div className="add-word-page">
-      <div className="mode-toggle">
-        <button
-          id="mode-single"
-          type="button"
-          className={`mode-toggle__btn ${mode === 'single' ? 'mode-toggle__btn--active' : ''}`}
-          onClick={() => setMode('single')}
-        >
-          Single
-        </button>
-        <button
-          id="mode-batch"
-          type="button"
-          className={`mode-toggle__btn ${mode === 'batch' ? 'mode-toggle__btn--active' : ''}`}
-          onClick={() => setMode('batch')}
-        >
-          Batch
-        </button>
-      </div>
-
       <form
         className="add-word-form"
         onSubmit={mode === 'single' ? handleSingleSubmit : handleBatchSubmit}
@@ -162,27 +143,47 @@ export function AddWordPage() {
         </div>
 
         {mode === 'single' ? (
-          <input
-            id="word-input"
-            className="add-word-form__input"
-            type="text"
-            placeholder="Enter a word…"
-            value={word}
-            onChange={(e) => setWord(e.target.value)}
-            autoFocus
-            disabled={isLoading}
-          />
+          <>
+            <input
+              id="word-input"
+              className="add-word-form__input"
+              type="text"
+              placeholder="Enter a word…"
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              autoFocus
+              disabled={isLoading}
+            />
+            <button
+              id="mode-batch"
+              type="button"
+              className="mode-switch-link"
+              onClick={() => setMode('batch')}
+            >
+              Add multiple words at once
+            </button>
+          </>
         ) : (
-          <textarea
-            id="batch-input"
-            className="add-word-form__textarea"
-            placeholder="Enter words separated by commas, e.g. hello, goodbye, thanks"
-            value={batchInput}
-            onChange={(e) => setBatchInput(e.target.value)}
-            autoFocus
-            disabled={isLoading}
-            rows={3}
-          />
+          <>
+            <textarea
+              id="batch-input"
+              className="add-word-form__textarea"
+              placeholder="Enter words separated by commas, e.g. hello, goodbye, thanks"
+              value={batchInput}
+              onChange={(e) => setBatchInput(e.target.value)}
+              autoFocus
+              disabled={isLoading}
+              rows={3}
+            />
+            <button
+              id="mode-single"
+              type="button"
+              className="mode-switch-link"
+              onClick={() => setMode('single')}
+            >
+              Back to single word
+            </button>
+          </>
         )}
 
         <DeckSelector

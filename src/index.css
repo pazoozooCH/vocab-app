@@ -239,6 +239,13 @@ body {
   color: #ffffff;
 }
 
+.btn--icon {
+  padding: 6px 8px;
+  min-width: 32px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
 /* Forms */
 
 input[type='text'],

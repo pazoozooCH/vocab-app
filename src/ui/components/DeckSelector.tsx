@@ -107,11 +107,12 @@ export function DeckSelector({
         {selectedDeck && (
           <button
             id="delete-deck-btn"
-            className="btn btn--small btn--danger"
+            className="btn btn--small btn--danger btn--icon"
             onClick={handleDelete}
             title={`Delete deck "${selectedDeck}"`}
+            aria-label={`Delete deck "${selectedDeck}"`}
           >
-            &times;
+            &#x1F5D1;&#xFE0E;
           </button>
         )}
       </div>

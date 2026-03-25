@@ -364,14 +364,11 @@ select:focus {
   margin-bottom: 8px;
 }
 
-.word-card__sentences ul {
-  list-style: disc;
-  padding-left: 20px;
-  margin-bottom: 4px;
+.word-card__sentences {
   font-size: 0.875rem;
 }
 
-.word-card__sentences li {
+.word-card__sentence {
   margin-bottom: 2px;
 }
 

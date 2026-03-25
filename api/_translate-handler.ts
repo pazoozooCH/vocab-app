@@ -51,15 +51,16 @@ export async function handleTranslate(
 Return a JSON object with exactly this structure:
 {
   "translations": ["German translation 1", "German translation 2"],
-  "sentencesSource": ["${sourceLang} sentence 1 with **${word}** bolded", "${sourceLang} sentence 2 with **${word}** bolded"],
-  "sentencesGerman": ["German sentence 1 with **translation** bolded", "German sentence 2 with **translation** bolded"]
+  "sentencesSource": ["1. ${sourceLang} sentence with **${word}** bolded", "2. ${sourceLang} sentence with **${word}** bolded"],
+  "sentencesGerman": ["1. German sentence with **translation** bolded", "2. German sentence with **translation** bolded"]
 }
 
 Rules:
 - Include all common German translations (usually 1-3)
 - Generate 2-3 sample sentences in ${sourceLang} and their German translations
+- Number each sentence with an ordinal prefix (1., 2., 3.)
 - Bold the vocabulary word in each sentence using **markdown bold**
-- Use natural, everyday sentences
+- Use natural, everyday sentences${language === 'FR' ? '\n- French words must always include their article (un/une, le/la)' : ''}
 - Return ONLY the JSON object, no other text`,
     })
 

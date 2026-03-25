@@ -21,16 +21,12 @@ export function WordCard({ word, onDelete }: WordCardProps) {
       </div>
 
       <div className="word-card__sentences">
-        <ul>
-          {word.sentencesSource.map((s, i) => (
-            <li key={`src-${i}`}>{s}</li>
-          ))}
-        </ul>
-        <ul>
-          {word.sentencesGerman.map((s, i) => (
-            <li key={`de-${i}`}>{s}</li>
-          ))}
-        </ul>
+        {word.sentencesSource.map((s, i) => (
+          <div key={`src-${i}`} className="word-card__sentence">{s}</div>
+        ))}
+        {word.sentencesGerman.map((s, i) => (
+          <div key={`de-${i}`} className="word-card__sentence">{s}</div>
+        ))}
       </div>
 
       <div className="word-card__meta">

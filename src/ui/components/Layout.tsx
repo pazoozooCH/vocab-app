@@ -1,13 +1,17 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AppContext'
 
+const isLocalDev = import.meta.env.DEV
+
 export function Layout() {
   const { signOut } = useAuth()
 
   return (
     <div className="layout">
-      <header className="top-bar">
-        <h1 id="app-title" className="top-bar__title">Vocab</h1>
+      <header className={`top-bar ${isLocalDev ? 'top-bar--local' : ''}`}>
+        <h1 id="app-title" className="top-bar__title">
+          Vocab{isLocalDev && <span className="top-bar__local-badge">LOCAL</span>}
+        </h1>
         <button id="sign-out-btn" className="top-bar__signout" onClick={signOut}>
           Sign out
         </button>

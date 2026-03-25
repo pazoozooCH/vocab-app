@@ -4,7 +4,7 @@ test('create a new deck and verify it is selected in the dropdown', async ({ pag
   await page.goto('/')
 
   // Should be on the Add Word page (authenticated via storage state)
-  await expect(page.locator('#app-title')).toHaveText('Vocab')
+  await expect(page.locator('#app-title')).toContainText('Vocab')
 
   // Select EN language
   await page.click('#lang-en')

@@ -16,7 +16,10 @@ export function useWords(options: UseWordsOptions = {}) {
   const [loading, setLoading] = useState(true)
 
   const reload = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     let result: Word[]
     if (options.deck && options.status === WordStatusEnum.Pending) {

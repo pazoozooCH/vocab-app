@@ -10,7 +10,10 @@ export function useDecks(language?: Language) {
   const [loading, setLoading] = useState(true)
 
   const reload = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     const result = language
       ? await deckRepository.findByLanguage(language, user.id)

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test('create a new deck and verify it is selected in the dropdown', async ({ page }) => {
   await page.goto('/')

@@ -252,6 +252,8 @@ npm run db:reset     # Reset local DB and re-run all migrations
 To see the browser during e2e tests: `npx playwright test --headed`
 For interactive step-through mode: `npx playwright test --ui`
 
+On failure, Playwright saves screenshots, video, and a full trace to `test-results/`. Inspect a trace with: `npx playwright show-trace test-results/<test-name>/trace.zip`
+
 ## Deployment
 
 1. Create a Supabase project at https://supabase.com (free tier)

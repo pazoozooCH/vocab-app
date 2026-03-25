@@ -7,8 +7,8 @@ interface DeckSelectorProps {
   decks: Deck[]
   selectedDeck: string
   onSelect: (deck: string) => void
-  onDeckCreated?: () => void
-  onDeckDeleted?: () => void
+  onDeckCreated?: () => Promise<void> | void
+  onDeckDeleted?: () => Promise<void> | void
   allowAll?: boolean
   language?: Language
 }
@@ -50,7 +50,7 @@ export function DeckSelector({
     setNewDeckName('')
     setCreateError(null)
     setIsCreating(false)
-    onDeckCreated?.()
+    await onDeckCreated?.()
     onSelect(deck.name)
   }
 
@@ -73,7 +73,7 @@ export function DeckSelector({
 
     await deckRepository.delete(deck.id, user.id)
     onSelect('')
-    onDeckDeleted?.()
+    await onDeckDeleted?.()
   }
 
   return (
@@ -93,7 +93,7 @@ export function DeckSelector({
         >
           {allowAll && <option value="">All decks</option>}
           {!allowAll && (
-            <option value="" disabled={!!selectedDeck}>
+            <option value="">
               Select a deck…
             </option>
           )}

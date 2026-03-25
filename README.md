@@ -220,6 +220,15 @@ npm run dev
 - **Production**: cloud project, migrations applied with `npx supabase db push`.
 - Migrations live in `supabase/migrations/` and are developed locally first, then pushed to production.
 
+### Testing Strategy
+
+Both local development and integration tests share the same local Supabase instance. Data isolation is achieved by user ID — the same way RLS works in production:
+
+- **Dev/manual testing** uses your real authenticated user ID. Data persists between sessions.
+- **Integration tests** use a dedicated test user ID (a fixed UUID). Tests clean up their own rows in `beforeEach`/`afterAll`, so dev data is never touched.
+
+This means `npx supabase start` must be running before you run integration tests (`npm test`).
+
 ## Deployment
 
 1. Create a Supabase project at https://supabase.com (free tier)

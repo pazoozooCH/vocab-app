@@ -195,6 +195,7 @@ cp .env.example .env
 # Fill in your keys (see .env.example for descriptions)
 
 # Start local Supabase (requires Docker)
+# Reads GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET from .env for local OAuth
 npx supabase start
 # Copy the printed Publishable key into .env as SUPABASE_LOCAL_ANON_KEY
 
@@ -237,8 +238,12 @@ This means `npx supabase start` must be running before you run integration tests
 2. In Supabase → Authentication → Providers: enable **Google OAuth** and disable **Email auth** (enabled by default, not needed)
    - Create a Google Cloud project (free) at [Google Cloud Console](https://console.cloud.google.com/) (any Google account works)
    - Go to APIs & Credentials → Create OAuth Client ID (application type: Web application)
-   - Set the authorized redirect URI to your Supabase callback URL (`https://<project-ref>.supabase.co/auth/v1/callback`)
-   - Copy the **Client ID** and **Client Secret** into the Supabase Google provider settings
+   - Add authorized redirect URIs for both environments:
+     - Production: `https://<project-ref>.supabase.co/auth/v1/callback`
+     - Local: `http://127.0.0.1:54321/auth/v1/callback`
+   - Copy the **Client ID** and **Client Secret** into:
+     - Supabase cloud dashboard → Google provider settings
+     - `.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (used by local Supabase via `config.toml`)
 3. Run the database migrations (SQL in `supabase/migrations/`)
 4. Deploy to Vercel: connect the GitHub repo, set environment variables
 5. Add the Vercel URL to Supabase → Authentication → URL Configuration

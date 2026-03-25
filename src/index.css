@@ -344,6 +344,10 @@ select:focus {
   color: #ffffff;
 }
 
+.language-toggle__flag {
+  font-size: 1.125rem;
+}
+
 /* Status Filter */
 
 .status-filter {

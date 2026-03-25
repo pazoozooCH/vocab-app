@@ -1,24 +1,49 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { WordStatus } from '../../domain/values/WordStatus'
 import { WordStatus as WordStatusEnum } from '../../domain/values/WordStatus'
+import { Language } from '../../domain/values/Language'
 import { useAuth, useServices } from '../context/AppContext'
 import { useDecks } from '../hooks/useDecks'
 import { useWords } from '../hooks/useWords'
 import { usePersistedState } from '../hooks/usePersistedState'
-import { DeckSelector } from '../components/DeckSelector'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
 import type { Word } from '../../domain/entities/Word'
+
+// Filter values: '' = all, 'EN' = all English, 'FR' = all French, 'deck:Name' = specific deck
+type DeckFilter = string
+
+function parseDeckFilter(filter: DeckFilter): { deck?: string; language?: Language } {
+  if (!filter) return {}
+  if (filter === Language.EN || filter === Language.FR) return { language: filter }
+  if (filter.startsWith('deck:')) return { deck: filter.slice(5) }
+  return {}
+}
 
 export function WordListPage() {
   const { user } = useAuth()
   const { wordRepository } = useServices()
-  const { decks, reload: reloadDecks } = useDecks()
-  const [deck, setDeck] = usePersistedState<string>('wordList.deck', '')
+  const { decks } = useDecks()
+  const [deckFilter, setDeckFilter] = usePersistedState<DeckFilter>('wordList.deck', '')
   const [status, setStatus] = useState<WordStatus | ''>('')
-  const { words, loading, reload } = useWords({
-    deck: deck || undefined,
+
+  const { deck: filterDeck, language: filterLanguage } = useMemo(
+    () => parseDeckFilter(deckFilter),
+    [deckFilter],
+  )
+
+  const { words: allWords, loading, reload } = useWords({
+    deck: filterDeck || undefined,
     status: (status as WordStatus) || undefined,
   })
+
+  // Client-side language filter when "all EN" or "all FR" is selected
+  const words = useMemo(() => {
+    if (!filterLanguage) return allWords
+    return allWords.filter((w) => w.language === filterLanguage)
+  }, [allWords, filterLanguage])
+
+  const enDecks = useMemo(() => decks.filter((d) => d.language === Language.EN), [decks])
+  const frDecks = useMemo(() => decks.filter((d) => d.language === Language.FR), [decks])
 
   const handleDelete = async (word: Word) => {
     if (!user) return
@@ -30,13 +55,30 @@ export function WordListPage() {
   return (
     <div className="word-list-page">
       <div className="word-list-filters">
-        <DeckSelector
-          decks={decks}
-          selectedDeck={deck}
-          onSelect={setDeck}
-          onDeckCreated={reloadDecks}
-          allowAll
-        />
+        <select
+          id="deck-select"
+          className="deck-selector__select"
+          value={deckFilter}
+          onChange={(e) => setDeckFilter(e.target.value)}
+        >
+          <option value="">All decks</option>
+          {enDecks.length > 0 && (
+            <optgroup label="\uD83C\uDDEC\uD83C\uDDE7 English">
+              <option value="EN">{'\uD83C\uDDEC\uD83C\uDDE7'} All English decks</option>
+              {enDecks.map((d) => (
+                <option key={d.id} value={`deck:${d.name}`}>{d.name}</option>
+              ))}
+            </optgroup>
+          )}
+          {frDecks.length > 0 && (
+            <optgroup label="\uD83C\uDDEB\uD83C\uDDF7 French">
+              <option value="FR">{'\uD83C\uDDEB\uD83C\uDDF7'} All French decks</option>
+              {frDecks.map((d) => (
+                <option key={d.id} value={`deck:${d.name}`}>{d.name}</option>
+              ))}
+            </optgroup>
+          )}
+        </select>
 
         <div className="status-filter">
           <button

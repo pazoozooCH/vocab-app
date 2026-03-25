@@ -159,7 +159,7 @@ export function AddWordPage() {
             className={`language-toggle__btn ${language === Language.EN ? 'language-toggle__btn--active' : ''}`}
             onClick={() => { setLanguage(Language.EN); setDeck('') }}
           >
-            EN
+            <span className="language-toggle__flag" role="img" aria-label="English">&#x1F1EC;&#x1F1E7;</span> EN
           </button>
           <button
             id="lang-fr"
@@ -167,7 +167,7 @@ export function AddWordPage() {
             className={`language-toggle__btn ${language === Language.FR ? 'language-toggle__btn--active' : ''}`}
             onClick={() => { setLanguage(Language.FR); setDeck('') }}
           >
-            FR
+            <span className="language-toggle__flag" role="img" aria-label="French">&#x1F1EB;&#x1F1F7;</span> FR
           </button>
         </div>
 

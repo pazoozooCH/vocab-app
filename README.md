@@ -169,21 +169,30 @@ POST /api/translate   — Receives { word, language }, calls Gemini API, returns
 3. **Export**
    - Select a deck, preview pending words, download `.apkg`
 
-## MVP Scope
+## Features
 
-Phase 1 (MVP):
-- Google OAuth login
-- Add words with AI translation + sentence generation
-- Store in Supabase PostgreSQL
-- Browse/edit saved words
-- Export to `.apkg` file
-- Deploy to Vercel
+- **Google OAuth** login via Supabase Auth
+- **AI-powered translation** — enter a word (EN/FR), get German translations + sample sentences via Gemini API (free tier, with automatic model fallback)
+- **Domain classifiers** — translations tagged with context like _[Law]_, _[Med]_, _[Coll]_ where appropriate
+- **Context refinement** — refine a translation with a hint (e.g. "for sitting" for "bank") to narrow the meaning
+- **Batch add** — add multiple words at once, comma-separated
+- **Deck management** — create and delete decks, per language, with Anki hierarchical naming (`English::Verbs`)
+- **Duplicate detection** — warns when adding a word that already exists, shows potential duplicates
+- **Word list** — compact expandable rows, filter by language/deck/status
+- **Export** — mark words as exported (`.apkg` download pending)
+- **Dark mode** — automatic via `prefers-color-scheme`
+- **PWA** — installable on mobile with custom icon
+- **Responsive** — mobile-first, works on phone and desktop
+- **Persistent UI state** — language, deck, and mode selections saved across sessions
 
-Phase 2:
-- AnkiConnect sync (desktop)
-- Offline support (PWA)
-- Batch word entry
-- Word history / statistics
+## Pending Features
+
+- **Anki .apkg export** — generate and download `.apkg` files for import into Anki
+- **Email whitelist** — restrict access to pre-approved email addresses
+- **Word editing** — modify translations, sentences, or deck assignment after adding
+- **AnkiConnect sync** — direct sync to Anki desktop via AnkiConnect
+- **Offline support** — service worker caching for offline use
+- **Word history / statistics** — track learning progress
 
 ## Getting Started
 

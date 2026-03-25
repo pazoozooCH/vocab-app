@@ -142,6 +142,14 @@ export function AddWordPage() {
           </button>
         </div>
 
+        <DeckSelector
+          decks={decks}
+          selectedDeck={deck}
+          onSelect={setDeck}
+          onDeckCreated={reloadDecks}
+          language={language}
+        />
+
         {mode === 'single' ? (
           <>
             <input
@@ -185,14 +193,6 @@ export function AddWordPage() {
             </button>
           </>
         )}
-
-        <DeckSelector
-          decks={decks}
-          selectedDeck={deck}
-          onSelect={setDeck}
-          onDeckCreated={reloadDecks}
-          language={language}
-        />
 
         <button
           id="add-word-btn"

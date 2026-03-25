@@ -18,7 +18,7 @@ This app automates steps 2–5 into a single action.
 ### Core Workflow
 - User enters a word (English or French)
 - App detects the source language (EN or FR)
-- App translates the word to German using AI (Claude API)
+- App translates the word to German using AI (Gemini API)
 - App generates 2–3 sample sentences in both the source language and German
 - Card is stored in the app's database, ready for Anki export
 
@@ -53,13 +53,15 @@ This app automates steps 2–5 into a single action.
 | Layer       | Technology                          |
 |-------------|-------------------------------------|
 | Frontend    | React + TypeScript (Vite)           |
-| Backend     | None — Supabase client SDK for DB/auth, single Vercel serverless function for Claude API |
+| Backend     | None — Supabase client SDK for DB/auth, single Vercel serverless function for Gemini API |
 | Database    | Supabase (PostgreSQL, free tier)    |
 | Auth        | Supabase Auth with Google OAuth     |
 | Hosting     | Vercel (free tier)                  |
-| AI          | Claude API via Vercel serverless function (keeps API key server-side) |
+| AI          | Gemini API via Vercel serverless function (free tier, keeps API key server-side) |
 | Anki Export | `anki-apkg-export` or custom SQLite-based `.apkg` generator |
 | Dev Tooling | MCP servers (see below)             |
+
+> **Why Gemini over Claude API?** Both produce excellent translations. Gemini was chosen because it offers a free tier (250 requests/day with Gemini 2.5 Flash), which is more than enough for a personal vocab app. The Anthropic API has no free tier and charges per token.
 
 ### MCP Servers
 
@@ -73,7 +75,7 @@ The following MCP servers are used during development with Claude Code:
 
 ### Architecture
 - **No dedicated backend** — the React app talks directly to Supabase for auth and CRUD operations
-- **One serverless function** (`/api/translate`) — receives a word, calls Claude API, returns translation + sentences. This is the only server-side code, needed to keep the Anthropic API key secret.
+- **One serverless function** (`/api/translate`) — receives a word, calls Gemini API, returns translation + sentences. This is the only server-side code, needed to keep the API key secret.
 - **Supabase RLS** ensures users can only access their own data without backend middleware
 - **Supabase** free tier: 500 MB database, 50,000 monthly active users
 - **Vercel** free tier: generous for personal use, zero config deployment
@@ -105,14 +107,14 @@ src/
 - **Value objects** (`Language`, `WordStatus`) are simple constrained types with no identity.
 - **Ports** define what the application needs (e.g. "save a word", "translate a word") without knowing how.
 - **Use cases** are plain functions that take input + dependencies (ports) and return results. Easy to test with mocks.
-- **Infrastructure** is the only layer that knows about Supabase, the Claude API, etc.
+- **Infrastructure** is the only layer that knows about Supabase, the Gemini API, etc.
 
 ### Authentication & Access Control
 - Google OAuth login via Supabase Auth
 - **Email whitelist**: only pre-approved email addresses can use the app
   - Whitelist stored as an `allowed_users` table in Supabase (or environment variable)
   - Supabase RLS policies check the user's email against the whitelist on every query
-  - The `/api/translate` serverless function also validates the user's JWT and checks the whitelist before calling Claude API
+  - The `/api/translate` serverless function also validates the user's JWT and checks the whitelist before calling Gemini API
 - Non-whitelisted users see a "not authorized" message after login — no data access, no API costs
 - Session persists via Supabase client library (auto-refresh tokens)
 
@@ -145,7 +147,7 @@ src/
 
 ### Serverless Function (Vercel)
 ```
-POST /api/translate   — Receives { word, language }, calls Claude API, returns translations + sentences
+POST /api/translate   — Receives { word, language }, calls Gemini API, returns translations + sentences
 ```
 
 ### Direct Supabase Access (from frontend via SDK)

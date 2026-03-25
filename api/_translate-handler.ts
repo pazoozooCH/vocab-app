@@ -1,7 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenAI } from '@google/genai'
 import { createClient } from '@supabase/supabase-js'
 
-const anthropic = new Anthropic()
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
 export async function handleTranslate(
   body: { word?: string; language?: string },
@@ -38,13 +38,9 @@ export async function handleTranslate(
   const sourceLang = language === 'EN' ? 'English' : 'French'
 
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: `Translate the ${sourceLang} word "${word}" to German.
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Translate the ${sourceLang} word "${word}" to German.
 
 Return a JSON object with exactly this structure:
 {
@@ -59,16 +55,14 @@ Rules:
 - Bold the vocabulary word in each sentence using **markdown bold**
 - Use natural, everyday sentences
 - Return ONLY the JSON object, no other text`,
-        },
-      ],
     })
 
-    const content = message.content[0]
-    if (content.type !== 'text') {
-      return { status: 500, body: { error: 'Unexpected response from Claude' } }
+    const text = response.text?.replace(/```json\n?|\n?```/g, '').trim()
+    if (!text) {
+      return { status: 500, body: { error: 'Empty response from Gemini' } }
     }
 
-    const result = JSON.parse(content.text)
+    const result = JSON.parse(text)
 
     if (
       !result.translations?.length ||

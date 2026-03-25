@@ -14,13 +14,13 @@ Follow Clean Architecture with clear dependency rules — inner layers never dep
 src/
 ├── domain/           # Entities, value objects, domain errors (no external dependencies)
 ├── application/      # Use cases / application services (depends only on domain)
-├── infrastructure/   # Supabase client, Claude API client, Anki export (implements interfaces from application)
+├── infrastructure/   # Supabase client, Gemini API client, Anki export (implements interfaces from application)
 └── ui/               # React components, pages, hooks (depends on application layer via dependency injection)
 ```
 
 - **Domain layer**: Pure TypeScript. Contains `Word`, `Deck`, `Translation` entities and value objects. No imports from Supabase, React, or any framework.
 - **Application layer**: Use cases like `AddWord`, `ExportDeck`. Depends on repository interfaces (ports), not implementations.
-- **Infrastructure layer**: Implements repository interfaces using Supabase SDK, Claude API, etc. This is the only layer that knows about external services.
+- **Infrastructure layer**: Implements repository interfaces using Supabase SDK, Gemini API, etc. This is the only layer that knows about external services.
 - **UI layer**: React components. Calls use cases from the application layer, never touches infrastructure directly.
 
 ### Domain-Driven Design
@@ -77,7 +77,7 @@ src/
 | Language        | TypeScript (strict mode)          |
 | Frontend        | React + Vite                      |
 | Database + Auth | Supabase (PostgreSQL + Google OAuth) |
-| AI              | Claude API (Vercel serverless fn) |
+| AI              | Gemini API (Vercel serverless fn) |
 | Unit Tests      | Vitest                            |
 | E2E Tests       | Playwright                        |
 | Linting         | ESLint + Prettier                 |

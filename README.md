@@ -184,11 +184,11 @@ POST /api/translate   — Receives { word, language }, calls Gemini API, returns
 - **PWA** — installable on mobile with custom icon
 - **Responsive** — mobile-first, works on phone and desktop
 - **Persistent UI state** — language, deck, and mode selections saved across sessions
+- **Email whitelist** — only pre-approved emails can access the app, enforced via RLS and API checks
 
 ## Pending Features
 
 - **Anki .apkg export** — generate and download `.apkg` files for import into Anki
-- **Email whitelist** — restrict access to pre-approved email addresses
 - **Word editing** — modify translations, sentences, or deck assignment after adding
 - **AnkiConnect sync** — direct sync to Anki desktop via AnkiConnect
 - **Offline support** — service worker caching for offline use
@@ -296,6 +296,10 @@ On failure, Playwright saves screenshots, video, and a full trace to `test-resul
    - Add it to Supabase → Authentication → URL Configuration → Site URL
    - Add it to Supabase → Authentication → URL Configuration → Redirect URLs
    - Add `https://vocab-app-taupe.vercel.app` as an authorized JavaScript origin in Google Cloud Console
+   - Add your email to the `allowed_users` table in Supabase (SQL Editor or dashboard):
+     ```sql
+     INSERT INTO allowed_users (email) VALUES ('your@email.com');
+     ```
 
 ### Continuous deployment
 

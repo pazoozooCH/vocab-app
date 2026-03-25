@@ -33,6 +33,16 @@ export async function handleTranslate(
     return { status: 401, body: { error: 'Invalid token' } }
   }
 
+  // Check email whitelist
+  const { data: allowed } = await supabase
+    .from('allowed_users')
+    .select('email')
+    .eq('email', user.email)
+    .single()
+  if (!allowed) {
+    return { status: 403, body: { error: 'Not authorized' } }
+  }
+
   const { word, language, context } = body
   if (!word || !language || !['EN', 'FR'].includes(language)) {
     return {

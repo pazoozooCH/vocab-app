@@ -25,6 +25,7 @@ interface AppServices {
 interface AuthState {
   user: User | null
   loading: boolean
+  authorized: boolean | null // null = checking, true = allowed, false = blocked
   signIn: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -42,6 +43,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [authorized, setAuthorized] = useState<boolean | null>(null)
 
   const supabase = useMemo(
     () => createClient(supabaseUrl, supabaseAnonKey),
@@ -60,6 +62,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     )
     return { wordRepository, deckRepository, translationService, supabase }
   }, [supabase])
+
+  // Check whitelist when user changes
+  useEffect(() => {
+    if (!user?.email) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset auth state when user logs out
+      setAuthorized(null)
+      return
+    }
+    supabase
+      .from('allowed_users')
+      .select('email')
+      .eq('email', user.email)
+      .single()
+      .then(({ data }) => {
+        setAuthorized(!!data)
+      })
+  }, [user, supabase])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -81,6 +100,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       loading,
+      authorized,
       signIn: async () => {
         await supabase.auth.signInWithOAuth({ provider: 'google' })
       },
@@ -88,7 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut()
       },
     }),
-    [user, loading, supabase],
+    [user, loading, authorized, supabase],
   )
 
   return (

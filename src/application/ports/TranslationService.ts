@@ -7,5 +7,5 @@ export interface TranslationResult {
 }
 
 export interface TranslationService {
-  translate(word: string, language: Language): Promise<TranslationResult>
+  translate(word: string, language: Language, context?: string): Promise<TranslationResult>
 }

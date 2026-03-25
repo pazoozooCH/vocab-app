@@ -271,6 +271,51 @@ select:focus {
   font-size: 1.125rem;
 }
 
+.add-word-form__textarea {
+  width: 100%;
+  padding: 10px 12px;
+  min-height: 80px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.add-word-form__textarea:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+
+/* Mode Toggle (Single / Batch) */
+
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.mode-toggle__btn {
+  flex: 1;
+  padding: 6px 12px;
+  min-height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.mode-toggle__btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
 .add-word-result {
   margin-top: 24px;
 }
@@ -396,6 +441,20 @@ select:focus {
   margin-top: 8px;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
+}
+
+.word-card__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.word-card__refine {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
 }
 
 /* Badges */

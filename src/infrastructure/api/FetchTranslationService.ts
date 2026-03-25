@@ -13,7 +13,7 @@ export class FetchTranslationService implements TranslationService {
     this.getAccessToken = getAccessToken
   }
 
-  async translate(word: string, language: Language): Promise<TranslationResult> {
+  async translate(word: string, language: Language, context?: string): Promise<TranslationResult> {
     const token = await this.getAccessToken()
 
     const response = await fetch(`${this.baseUrl}/api/translate`, {
@@ -22,7 +22,7 @@ export class FetchTranslationService implements TranslationService {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ word, language }),
+      body: JSON.stringify({ word, language, ...(context ? { context } : {}) }),
     })
 
     if (!response.ok) {

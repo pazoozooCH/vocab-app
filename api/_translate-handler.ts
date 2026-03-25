@@ -10,7 +10,7 @@ function getAI(): GoogleGenAI {
 }
 
 export async function handleTranslate(
-  body: { word?: string; language?: string },
+  body: { word?: string; language?: string; context?: string },
   authHeader: string | undefined,
   supabaseUrl: string,
   supabaseAnonKey: string,
@@ -33,7 +33,7 @@ export async function handleTranslate(
     return { status: 401, body: { error: 'Invalid token' } }
   }
 
-  const { word, language } = body
+  const { word, language, context } = body
   if (!word || !language || !['EN', 'FR'].includes(language)) {
     return {
       status: 400,
@@ -43,7 +43,9 @@ export async function handleTranslate(
 
   const sourceLang = language === 'EN' ? 'English' : 'French'
 
-  const prompt = `Translate the ${sourceLang} word "${word}" to German.
+  const contextHint = context ? `\nContext: the meaning of "${word}" as in "${context}".` : ''
+
+  const prompt = `Translate the ${sourceLang} word "${word}" to German.${contextHint}
 
 Return a JSON object with exactly this structure:
 {

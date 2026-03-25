@@ -9,6 +9,7 @@ interface AddWordInput {
   language: Language
   deck: string
   userId: string
+  context?: string
 }
 
 interface AddWordDeps {
@@ -28,6 +29,7 @@ export async function addWord(
   const translation = await deps.translationService.translate(
     trimmed,
     input.language,
+    input.context,
   )
 
   const word = Word.create({

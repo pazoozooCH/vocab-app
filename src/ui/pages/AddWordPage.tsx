@@ -1,24 +1,30 @@
 import { useState } from 'react'
 import { Language } from '../../domain/values/Language'
-import type { Word } from '../../domain/entities/Word'
+import { Word } from '../../domain/entities/Word'
+import { WordStatus } from '../../domain/values/WordStatus'
 import { addWord } from '../../application/usecases/addWord'
 import { useAuth, useServices } from '../context/AppContext'
 import { useDecks } from '../hooks/useDecks'
 import { DeckSelector } from '../components/DeckSelector'
 import { WordCard } from '../components/WordCard'
 
+type InputMode = 'single' | 'batch'
+
 export function AddWordPage() {
   const { user } = useAuth()
   const { wordRepository, translationService } = useServices()
+  const [mode, setMode] = useState<InputMode>('single')
   const [word, setWord] = useState('')
+  const [batchInput, setBatchInput] = useState('')
   const [language, setLanguage] = useState<Language>(Language.EN)
   const [deck, setDeck] = useState('')
   const { decks, reload: reloadDecks } = useDecks(language)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [lastResult, setLastResult] = useState<Word | null>(null)
+  const [results, setResults] = useState<Word[]>([])
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSingleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !word.trim() || !deck) return
 
@@ -29,7 +35,7 @@ export function AddWordPage() {
         { word: word.trim(), language, deck, userId: user.id },
         { wordRepository, translationService },
       )
-      setLastResult(result)
+      setResults([result])
       setWord('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -38,9 +44,104 @@ export function AddWordPage() {
     }
   }
 
+  const handleBatchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !batchInput.trim() || !deck) return
+
+    const words = batchInput
+      .split(',')
+      .map((w) => w.trim())
+      .filter((w) => w.length > 0)
+
+    if (words.length === 0) return
+
+    setIsLoading(true)
+    setError(null)
+    setResults([])
+    setBatchProgress({ current: 0, total: words.length })
+
+    const added: Word[] = []
+    const errors: string[] = []
+
+    for (let i = 0; i < words.length; i++) {
+      setBatchProgress({ current: i + 1, total: words.length })
+      try {
+        const result = await addWord(
+          { word: words[i], language, deck, userId: user.id },
+          { wordRepository, translationService },
+        )
+        added.push(result)
+        setResults([...added])
+      } catch (err) {
+        errors.push(`"${words[i]}": ${err instanceof Error ? err.message : 'failed'}`)
+      }
+    }
+
+    setBatchProgress(null)
+    setIsLoading(false)
+    if (errors.length > 0) {
+      setError(`Some words failed:\n${errors.join('\n')}`)
+    }
+    if (added.length > 0) {
+      setBatchInput('')
+    }
+  }
+
+  const handleRefine = async (originalWord: Word, context: string) => {
+    if (!user) return
+
+    const translation = await translationService.translate(
+      originalWord.word,
+      originalWord.language,
+      context,
+    )
+
+    const refined = Word.create({
+      id: originalWord.id,
+      userId: originalWord.userId,
+      word: originalWord.word,
+      language: originalWord.language,
+      translations: translation.translations,
+      sentencesSource: translation.sentencesSource,
+      sentencesGerman: translation.sentencesGerman,
+      deck: originalWord.deck,
+      status: originalWord.status as typeof WordStatus.Pending | typeof WordStatus.Exported,
+      createdAt: originalWord.createdAt,
+      exportedAt: originalWord.exportedAt,
+    })
+
+    await wordRepository.update(refined)
+
+    setResults((prev) =>
+      prev.map((w) => (w.id === refined.id ? refined : w)),
+    )
+  }
+
   return (
     <div className="add-word-page">
-      <form className="add-word-form" onSubmit={handleSubmit}>
+      <div className="mode-toggle">
+        <button
+          id="mode-single"
+          type="button"
+          className={`mode-toggle__btn ${mode === 'single' ? 'mode-toggle__btn--active' : ''}`}
+          onClick={() => setMode('single')}
+        >
+          Single
+        </button>
+        <button
+          id="mode-batch"
+          type="button"
+          className={`mode-toggle__btn ${mode === 'batch' ? 'mode-toggle__btn--active' : ''}`}
+          onClick={() => setMode('batch')}
+        >
+          Batch
+        </button>
+      </div>
+
+      <form
+        className="add-word-form"
+        onSubmit={mode === 'single' ? handleSingleSubmit : handleBatchSubmit}
+      >
         <div className="language-toggle">
           <button
             id="lang-en"
@@ -60,16 +161,29 @@ export function AddWordPage() {
           </button>
         </div>
 
-        <input
-          id="word-input"
-          className="add-word-form__input"
-          type="text"
-          placeholder="Enter a word…"
-          value={word}
-          onChange={(e) => setWord(e.target.value)}
-          autoFocus
-          disabled={isLoading}
-        />
+        {mode === 'single' ? (
+          <input
+            id="word-input"
+            className="add-word-form__input"
+            type="text"
+            placeholder="Enter a word…"
+            value={word}
+            onChange={(e) => setWord(e.target.value)}
+            autoFocus
+            disabled={isLoading}
+          />
+        ) : (
+          <textarea
+            id="batch-input"
+            className="add-word-form__textarea"
+            placeholder="Enter words separated by commas, e.g. hello, goodbye, thanks"
+            value={batchInput}
+            onChange={(e) => setBatchInput(e.target.value)}
+            autoFocus
+            disabled={isLoading}
+            rows={3}
+          />
+        )}
 
         <DeckSelector
           decks={decks}
@@ -83,18 +197,30 @@ export function AddWordPage() {
           id="add-word-btn"
           className="btn btn--primary"
           type="submit"
-          disabled={isLoading || !word.trim() || !deck}
+          disabled={
+            isLoading ||
+            !(mode === 'single' ? word.trim() : batchInput.trim()) ||
+            !deck
+          }
         >
-          {isLoading ? 'Translating…' : 'Add Word'}
+          {isLoading
+            ? batchProgress
+              ? `Translating ${batchProgress.current}/${batchProgress.total}…`
+              : 'Translating…'
+            : mode === 'single'
+              ? 'Add Word'
+              : 'Add Words'}
         </button>
       </form>
 
       {error && <div id="error-message" className="error-message">{error}</div>}
 
-      {lastResult && (
+      {results.length > 0 && (
         <div id="add-word-result" className="add-word-result">
-          <h3>Added</h3>
-          <WordCard word={lastResult} />
+          <h3>Added ({results.length})</h3>
+          {results.map((w) => (
+            <WordCard key={w.id} word={w} onRefine={handleRefine} />
+          ))}
         </div>
       )}
     </div>

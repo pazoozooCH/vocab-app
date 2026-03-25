@@ -45,6 +45,7 @@ describe('addWord', () => {
     expect(translationService.translate).toHaveBeenCalledWith(
       'hello',
       Language.EN,
+      undefined,
     )
     expect(wordRepo.save).toHaveBeenCalledOnce()
     expect(result.word).toBe('hello')

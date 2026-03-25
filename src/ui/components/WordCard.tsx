@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Word } from '../../domain/entities/Word'
 
 function renderBold(text: string) {
@@ -10,9 +11,26 @@ function renderBold(text: string) {
 interface WordCardProps {
   word: Word
   onDelete?: (word: Word) => void
+  onRefine?: (word: Word, context: string) => Promise<void>
 }
 
-export function WordCard({ word, onDelete }: WordCardProps) {
+export function WordCard({ word, onDelete, onRefine }: WordCardProps) {
+  const [isRefining, setIsRefining] = useState(false)
+  const [context, setContext] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleRefine = async () => {
+    if (!context.trim() || !onRefine) return
+    setLoading(true)
+    try {
+      await onRefine(word, context.trim())
+      setContext('')
+      setIsRefining(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="word-card">
       <div className="word-card__header">
@@ -38,15 +56,55 @@ export function WordCard({ word, onDelete }: WordCardProps) {
 
       <div className="word-card__meta">
         <span className="word-card__deck">{word.deck}</span>
-        {onDelete && (
-          <button
-            className="btn btn--small btn--danger"
-            onClick={() => onDelete(word)}
-          >
-            Delete
-          </button>
-        )}
+        <div className="word-card__actions">
+          {onRefine && !isRefining && (
+            <button
+              id="refine-btn"
+              className="btn btn--small"
+              onClick={() => setIsRefining(true)}
+            >
+              Refine
+            </button>
+          )}
+          {onDelete && (
+            <button
+              className="btn btn--small btn--danger"
+              onClick={() => onDelete(word)}
+            >
+              Delete
+            </button>
+          )}
+        </div>
       </div>
+
+      {isRefining && (
+        <div className="word-card__refine">
+          <input
+            id="refine-context-input"
+            type="text"
+            placeholder={`e.g. "for sitting" or "financial"`}
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
+            autoFocus
+            disabled={loading}
+          />
+          <button
+            id="refine-submit-btn"
+            className="btn btn--small btn--primary"
+            onClick={handleRefine}
+            disabled={loading || !context.trim()}
+          >
+            {loading ? 'Refining…' : 'Go'}
+          </button>
+          <button
+            className="btn btn--small btn--ghost"
+            onClick={() => { setIsRefining(false); setContext('') }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   )
 }

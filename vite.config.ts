@@ -1,6 +1,16 @@
 import { defineConfig, type Plugin } from 'vitest/config'
 import { loadEnv } from 'vite'
+import { execSync } from 'child_process'
 import react from '@vitejs/plugin-react'
+
+function getBuildInfo() {
+  const commitCount = execSync('git rev-list --count HEAD').toString().trim()
+  const commitHash = process.env.VERCEL_GIT_COMMIT_SHA
+    ?? execSync('git rev-parse HEAD').toString().trim()
+  const shortHash = commitHash.slice(0, 7)
+  const buildDate = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  return { commitCount, commitHash, shortHash, buildDate }
+}
 
 function apiDevServer(): Plugin {
   return {
@@ -41,9 +51,17 @@ function apiDevServer(): Plugin {
   }
 }
 
+const buildInfo = getBuildInfo()
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), apiDevServer()],
+  define: {
+    __BUILD_NUMBER__: JSON.stringify(buildInfo.commitCount),
+    __BUILD_HASH__: JSON.stringify(buildInfo.commitHash),
+    __BUILD_SHORT_HASH__: JSON.stringify(buildInfo.shortHash),
+    __BUILD_DATE__: JSON.stringify(buildInfo.buildDate),
+  },
   server: {
     host: '127.0.0.1',
   },

@@ -43,10 +43,7 @@ export async function handleTranslate(
 
   const sourceLang = language === 'EN' ? 'English' : 'French'
 
-  try {
-    const response = await getAI().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Translate the ${sourceLang} word "${word}" to German.
+  const prompt = `Translate the ${sourceLang} word "${word}" to German.
 
 Return a JSON object with exactly this structure:
 {
@@ -61,27 +58,56 @@ Rules:
 - Number each sentence with an ordinal prefix (1., 2., 3.)
 - Bold the vocabulary word in each sentence using **markdown bold**
 - Use natural, everyday sentences${language === 'FR' ? '\n- French words must always include their article (un/une, le/la)' : ''}
-- Return ONLY the JSON object, no other text`,
-    })
+- Return ONLY the JSON object, no other text`
 
-    const text = response.text?.replace(/```json\n?|\n?```/g, '').trim()
-    if (!text) {
-      return { status: 500, body: { error: 'Empty response from Gemini' } }
+  const MAX_RETRIES = 3
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await getAI().models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      })
+
+      const text = response.text?.replace(/```json\n?|\n?```/g, '').trim()
+      if (!text) {
+        return { status: 500, body: { error: 'Empty response from Gemini' } }
+      }
+
+      const result = JSON.parse(text)
+
+      if (
+        !result.translations?.length ||
+        !result.sentencesSource?.length ||
+        !result.sentencesGerman?.length
+      ) {
+        return { status: 500, body: { error: 'Invalid translation response structure' } }
+      }
+
+      return { status: 200, body: result }
+    } catch (err: unknown) {
+      const isRetryable =
+        err instanceof Error &&
+        'status' in err &&
+        ((err as { status: number }).status === 503 ||
+          (err as { status: number }).status === 429)
+
+      if (isRetryable && attempt < MAX_RETRIES) {
+        console.warn(`Gemini API unavailable (attempt ${attempt}/${MAX_RETRIES}), retrying...`)
+        await new Promise((r) => setTimeout(r, attempt * 2000))
+        continue
+      }
+
+      console.error('Translation error:', err)
+
+      if (isRetryable) {
+        return {
+          status: 503,
+          body: { error: 'Translation service is temporarily busy. Please try again in a moment.' },
+        }
+      }
+      return { status: 500, body: { error: 'Translation failed' } }
     }
-
-    const result = JSON.parse(text)
-
-    if (
-      !result.translations?.length ||
-      !result.sentencesSource?.length ||
-      !result.sentencesGerman?.length
-    ) {
-      return { status: 500, body: { error: 'Invalid translation response structure' } }
-    }
-
-    return { status: 200, body: result }
-  } catch (err) {
-    console.error('Translation error:', err)
-    return { status: 500, body: { error: 'Translation failed' } }
   }
+
+  return { status: 500, body: { error: 'Translation failed' } }
 }

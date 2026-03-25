@@ -45,6 +45,9 @@ setup('authenticate', async ({ page }) => {
   const storageKey = `sb-127-auth-token`
   await page.evaluate(
     ({ key, value }) => {
+      // Clear any persisted UI preferences from previous test runs
+      localStorage.clear()
+      // Set the auth session
       localStorage.setItem(key, value)
     },
     {

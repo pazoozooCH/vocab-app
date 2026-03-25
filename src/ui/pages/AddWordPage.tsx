@@ -5,6 +5,7 @@ import { WordStatus } from '../../domain/values/WordStatus'
 import { addWord } from '../../application/usecases/addWord'
 import { useAuth, useServices } from '../context/AppContext'
 import { useDecks } from '../hooks/useDecks'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { DeckSelector } from '../components/DeckSelector'
 import { WordCard } from '../components/WordCard'
 
@@ -13,11 +14,11 @@ type InputMode = 'single' | 'batch'
 export function AddWordPage() {
   const { user } = useAuth()
   const { wordRepository, translationService } = useServices()
-  const [mode, setMode] = useState<InputMode>('single')
+  const [mode, setMode] = usePersistedState<InputMode>('addWord.mode', 'single')
   const [word, setWord] = useState('')
   const [batchInput, setBatchInput] = useState('')
-  const [language, setLanguage] = useState<Language>(Language.EN)
-  const [deck, setDeck] = useState('')
+  const [language, setLanguage] = usePersistedState<Language>('addWord.language', Language.EN)
+  const [deck, setDeck] = usePersistedState<string>('addWord.deck', '')
   const { decks, reload: reloadDecks } = useDecks(language)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

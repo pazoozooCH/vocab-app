@@ -4,6 +4,7 @@ import { WordStatus as WordStatusEnum } from '../../domain/values/WordStatus'
 import { useAuth, useServices } from '../context/AppContext'
 import { useDecks } from '../hooks/useDecks'
 import { useWords } from '../hooks/useWords'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { DeckSelector } from '../components/DeckSelector'
 import { WordCard } from '../components/WordCard'
 import type { Word } from '../../domain/entities/Word'
@@ -12,7 +13,7 @@ export function WordListPage() {
   const { user } = useAuth()
   const { wordRepository } = useServices()
   const { decks, reload: reloadDecks } = useDecks()
-  const [deck, setDeck] = useState('')
+  const [deck, setDeck] = usePersistedState<string>('wordList.deck', '')
   const [status, setStatus] = useState<WordStatus | ''>('')
   const { words, loading, reload } = useWords({
     deck: deck || undefined,

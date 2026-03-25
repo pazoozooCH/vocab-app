@@ -208,4 +208,55 @@ test.describe('Add Word flow', () => {
     // Verify the word appears
     await expect(page.locator('.word-card__word').first()).toHaveText('hello')
   })
+
+  test('delete a word from the add page result', async ({ page }) => {
+    await mockTranslateApi(page)
+    await page.goto('/')
+
+    await page.click('#lang-en')
+    await page.selectOption('#deck-select', '__new__')
+    await page.locator('#new-deck-input').fill('English::DeleteTest')
+    await page.click('#create-deck-btn')
+    await page.locator('#word-input').fill('hello')
+    await page.click('#add-word-btn')
+    await expect(page.locator('#add-word-result')).toBeVisible()
+    await expect(page.locator('.word-card__word')).toHaveText('hello')
+
+    // Accept the confirm dialog
+    page.on('dialog', (dialog) => dialog.accept())
+
+    // Delete the word
+    await page.click('#add-word-result .btn--danger')
+
+    // Word card should disappear from the result
+    await expect(page.locator('#add-word-result .word-card')).not.toBeVisible()
+  })
+
+  test('delete a word from the word list', async ({ page }) => {
+    await mockTranslateApi(page)
+    await page.goto('/')
+
+    // Add a word first
+    await page.click('#lang-en')
+    await page.selectOption('#deck-select', '__new__')
+    await page.locator('#new-deck-input').fill('English::DeleteList')
+    await page.click('#create-deck-btn')
+    await page.locator('#word-input').fill('hello')
+    await page.click('#add-word-btn')
+    await expect(page.locator('#add-word-result')).toBeVisible()
+
+    // Navigate to word list
+    await page.click('#nav-words')
+    const wordCard = page.locator('.word-card').filter({ hasText: 'English::DeleteList' })
+    await expect(wordCard).toBeVisible()
+
+    // Accept the confirm dialog
+    page.on('dialog', (dialog) => dialog.accept())
+
+    // Delete from word list
+    await wordCard.locator('.btn--danger').click()
+
+    // That specific word card should be gone
+    await expect(wordCard).not.toBeVisible()
+  })
 })

@@ -1,5 +1,12 @@
 import type { Word } from '../../domain/entities/Word'
 
+function renderBold(text: string) {
+  const parts = text.split(/\*\*(.+?)\*\*/)
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : part,
+  )
+}
+
 interface WordCardProps {
   word: Word
   onDelete?: (word: Word) => void
@@ -22,10 +29,10 @@ export function WordCard({ word, onDelete }: WordCardProps) {
 
       <div className="word-card__sentences">
         {word.sentencesSource.map((s, i) => (
-          <div key={`src-${i}`} className="word-card__sentence">{s}</div>
+          <div key={`src-${i}`} className="word-card__sentence">{renderBold(s)}</div>
         ))}
         {word.sentencesGerman.map((s, i) => (
-          <div key={`de-${i}`} className="word-card__sentence">{s}</div>
+          <div key={`de-${i}`} className="word-card__sentence">{renderBold(s)}</div>
         ))}
       </div>
 

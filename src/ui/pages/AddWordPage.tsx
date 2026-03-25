@@ -23,7 +23,21 @@ export function AddWordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<Word[]>([])
+  const [duplicatesMap, setDuplicatesMap] = useState<Record<string, Word[]>>({})
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null)
+
+  const checkDuplicates = async (addedWord: Word) => {
+    if (!user) return
+    const dupes = await wordRepository.findDuplicates(
+      addedWord.word,
+      addedWord.language,
+      user.id,
+      addedWord.id,
+    )
+    if (dupes.length > 0) {
+      setDuplicatesMap((prev) => ({ ...prev, [addedWord.id]: dupes }))
+    }
+  }
 
   const handleSingleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +45,7 @@ export function AddWordPage() {
 
     setIsLoading(true)
     setError(null)
+    setDuplicatesMap({})
     try {
       const result = await addWord(
         { word: word.trim(), language, deck, userId: user.id },
@@ -38,6 +53,7 @@ export function AddWordPage() {
       )
       setResults([result])
       setWord('')
+      checkDuplicates(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -59,6 +75,7 @@ export function AddWordPage() {
     setIsLoading(true)
     setError(null)
     setResults([])
+    setDuplicatesMap({})
     setBatchProgress({ current: 0, total: words.length })
 
     const added: Word[] = []
@@ -73,6 +90,7 @@ export function AddWordPage() {
         )
         added.push(result)
         setResults([...added])
+        checkDuplicates(result)
       } catch (err) {
         errors.push(`"${words[i]}": ${err instanceof Error ? err.message : 'failed'}`)
       }
@@ -224,7 +242,7 @@ export function AddWordPage() {
         <div id="add-word-result" className="add-word-result">
           <h3>Added ({results.length})</h3>
           {results.map((w) => (
-            <WordCard key={w.id} word={w} onRefine={handleRefine} />
+            <WordCard key={w.id} word={w} duplicates={duplicatesMap[w.id]} onRefine={handleRefine} />
           ))}
         </div>
       )}

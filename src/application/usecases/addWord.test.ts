@@ -12,6 +12,7 @@ function createMockWordRepository(): WordRepository {
     findByDeck: vi.fn(),
     findPendingByDeck: vi.fn(),
     findAllByUser: vi.fn(),
+    findDuplicates: vi.fn().mockResolvedValue([]),
     update: vi.fn(),
     delete: vi.fn(),
   }

@@ -17,14 +17,16 @@ function renderMarkdown(text: string) {
 
 interface WordCardProps {
   word: Word
+  duplicates?: Word[]
   onDelete?: (word: Word) => void
   onRefine?: (word: Word, context: string) => Promise<void>
 }
 
-export function WordCard({ word, onDelete, onRefine }: WordCardProps) {
+export function WordCard({ word, duplicates, onDelete, onRefine }: WordCardProps) {
   const [isRefining, setIsRefining] = useState(false)
   const [context, setContext] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showDuplicates, setShowDuplicates] = useState(false)
 
   const handleRefine = async () => {
     if (!context.trim() || !onRefine) return
@@ -66,6 +68,14 @@ export function WordCard({ word, onDelete, onRefine }: WordCardProps) {
       <div className="word-card__meta">
         <span className="word-card__deck">{word.deck}</span>
         <div className="word-card__actions">
+          {duplicates && duplicates.length > 0 && (
+            <button
+              className="btn btn--small btn--warn"
+              onClick={() => setShowDuplicates(!showDuplicates)}
+            >
+              {showDuplicates ? 'Hide duplicates' : `${duplicates.length} potential duplicate${duplicates.length > 1 ? 's' : ''}`}
+            </button>
+          )}
           {onRefine && !isRefining && (
             <button
               id="refine-btn"
@@ -85,6 +95,23 @@ export function WordCard({ word, onDelete, onRefine }: WordCardProps) {
           )}
         </div>
       </div>
+
+      {showDuplicates && duplicates && duplicates.length > 0 && (
+        <div className="word-card__duplicates">
+          <div className="word-card__duplicates-title">Potential duplicates:</div>
+          {duplicates.map((d) => (
+            <div key={d.id} className="word-card__duplicate">
+              <span className="word-card__duplicate-word">{renderMarkdown(d.word)}</span>
+              <span className="word-card__duplicate-translations">
+                {d.translations.map((t, i) => (
+                  <span key={i}>{i > 0 && ', '}{renderMarkdown(t)}</span>
+                ))}
+              </span>
+              <span className="word-card__duplicate-deck">{d.deck}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {isRefining && (
         <div className="word-card__refine">

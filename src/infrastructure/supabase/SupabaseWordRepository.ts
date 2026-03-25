@@ -104,6 +104,23 @@ export class SupabaseWordRepository implements WordRepository {
     return data.map(toDomain)
   }
 
+  async findDuplicates(word: string, language: Language, userId: string, excludeId?: string): Promise<Word[]> {
+    // Strip classifier (e.g. " _[Law]_") for matching
+    const bareWord = word.replace(/\s*_\[.*?\]_$/, '').trim()
+    let query = this.client
+      .from('words')
+      .select()
+      .eq('user_id', userId)
+      .eq('language', language)
+      .ilike('word', bareWord)
+    if (excludeId) {
+      query = query.neq('id', excludeId)
+    }
+    const { data, error } = await query
+    if (error) throw error
+    return data.map(toDomain)
+  }
+
   async update(word: Word): Promise<void> {
     const { error } = await this.client
       .from('words')

@@ -10,7 +10,11 @@
     "test:watch": "vitest",
     "lint": "eslint . && tsc -b --noEmit",
     "format": "prettier --write .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:start": "npx supabase start",
+    "db:stop": "npx supabase stop",
+    "db:restart": "npx supabase stop && npx supabase start",
+    "db:reset": "npx supabase db reset"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.100.0",

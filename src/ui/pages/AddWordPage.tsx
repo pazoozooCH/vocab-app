@@ -106,6 +106,13 @@ export function AddWordPage() {
     }
   }
 
+  const handleDelete = async (wordToDelete: Word) => {
+    if (!user) return
+    if (!confirm(`Delete "${wordToDelete.word}"?`)) return
+    await wordRepository.delete(wordToDelete.id, user.id)
+    setResults((prev) => prev.filter((w) => w.id !== wordToDelete.id))
+  }
+
   const handleRefine = async (originalWord: Word, context: string) => {
     if (!user) return
 
@@ -242,7 +249,7 @@ export function AddWordPage() {
         <div id="add-word-result" className="add-word-result">
           <h3>Added ({results.length})</h3>
           {results.map((w) => (
-            <WordCard key={w.id} word={w} duplicates={duplicatesMap[w.id]} onRefine={handleRefine} />
+            <WordCard key={w.id} word={w} duplicates={duplicatesMap[w.id]} onRefine={handleRefine} onDelete={handleDelete} />
           ))}
         </div>
       )}

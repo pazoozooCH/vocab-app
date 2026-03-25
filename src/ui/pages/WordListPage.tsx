@@ -63,7 +63,7 @@ export function WordListPage() {
         >
           <option value="">All decks</option>
           {enDecks.length > 0 && (
-            <optgroup label="\uD83C\uDDEC\uD83C\uDDE7 English">
+            <optgroup label={'\uD83C\uDDEC\uD83C\uDDE7 English'}>
               <option value="EN">{'\uD83C\uDDEC\uD83C\uDDE7'} All English decks</option>
               {enDecks.map((d) => (
                 <option key={d.id} value={`deck:${d.name}`}>{d.name}</option>
@@ -71,7 +71,7 @@ export function WordListPage() {
             </optgroup>
           )}
           {frDecks.length > 0 && (
-            <optgroup label="\uD83C\uDDEB\uD83C\uDDF7 French">
+            <optgroup label={'\uD83C\uDDEB\uD83C\uDDF7 French'}>
               <option value="FR">{'\uD83C\uDDEB\uD83C\uDDF7'} All French decks</option>
               {frDecks.map((d) => (
                 <option key={d.id} value={`deck:${d.name}`}>{d.name}</option>

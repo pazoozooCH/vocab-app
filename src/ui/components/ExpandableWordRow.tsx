@@ -5,6 +5,7 @@ import { WordCard } from './WordCard'
 
 interface ExpandableWordRowProps {
   word: Word
+  deckName?: string
   defaultExpanded?: boolean
   duplicates?: Word[]
   onDelete?: (word: Word) => void
@@ -13,6 +14,7 @@ interface ExpandableWordRowProps {
 
 export function ExpandableWordRow({
   word,
+  deckName,
   defaultExpanded = false,
   duplicates,
   onDelete,
@@ -32,6 +34,7 @@ export function ExpandableWordRow({
         </button>
         <WordCard
           word={word}
+          deckName={deckName}
           duplicates={duplicates}
           onDelete={onDelete}
           onRefine={onRefine}
@@ -48,7 +51,7 @@ export function ExpandableWordRow({
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && setExpanded(true)}
     >
-      <WordRow word={word} />
+      <WordRow word={word} deckName={deckName} />
     </div>
   )
 }

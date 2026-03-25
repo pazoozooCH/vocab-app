@@ -25,6 +25,7 @@ setup('authenticate', async ({ page }) => {
   }
 
   // Clean up any leftover e2e data
+  await adminClient.from('exports').delete().eq('user_id', E2E_USER_ID)
   await adminClient.from('words').delete().eq('user_id', E2E_USER_ID)
   await adminClient.from('decks').delete().eq('user_id', E2E_USER_ID)
 

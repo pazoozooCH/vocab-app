@@ -13,7 +13,7 @@ interface WordRow {
   translations: string[]
   sentences_source: string[]
   sentences_german: string[]
-  deck: string
+  deck_id: string
   status: string
   created_at: string
   exported_at: string | null
@@ -28,7 +28,7 @@ function toDomain(row: WordRow): Word {
     translations: row.translations,
     sentencesSource: row.sentences_source,
     sentencesGerman: row.sentences_german,
-    deck: row.deck,
+    deckId: row.deck_id,
     status: row.status as WordStatus,
     createdAt: new Date(row.created_at),
     exportedAt: row.exported_at ? new Date(row.exported_at) : null,
@@ -51,7 +51,7 @@ export class SupabaseWordRepository implements WordRepository {
       translations: word.translations,
       sentences_source: word.sentencesSource,
       sentences_german: word.sentencesGerman,
-      deck: word.deck,
+      deck_id: word.deckId,
       status: word.status,
       created_at: word.createdAt.toISOString(),
       exported_at: word.exportedAt?.toISOString() ?? null,
@@ -71,22 +71,22 @@ export class SupabaseWordRepository implements WordRepository {
     return toDomain(data)
   }
 
-  async findByDeck(deck: string, userId: string): Promise<Word[]> {
+  async findByDeckId(deckId: string, userId: string): Promise<Word[]> {
     const { data, error } = await this.client
       .from('words')
       .select()
-      .eq('deck', deck)
+      .eq('deck_id', deckId)
       .eq('user_id', userId)
       .order('created_at', { ascending: true })
     if (error) throw error
     return data.map(toDomain)
   }
 
-  async findPendingByDeck(deck: string, userId: string): Promise<Word[]> {
+  async findPendingByDeckId(deckId: string, userId: string): Promise<Word[]> {
     const { data, error } = await this.client
       .from('words')
       .select()
-      .eq('deck', deck)
+      .eq('deck_id', deckId)
       .eq('user_id', userId)
       .eq('status', WordStatusEnum.Pending)
       .order('created_at', { ascending: true })
@@ -105,7 +105,6 @@ export class SupabaseWordRepository implements WordRepository {
   }
 
   async findDuplicates(word: string, language: Language, userId: string, excludeId?: string): Promise<Word[]> {
-    // Strip classifier (e.g. " _[Law]_") for matching
     const bareWord = word.replace(/\s*_\[.*?\]_$/, '').trim()
     let query = this.client
       .from('words')
@@ -130,7 +129,7 @@ export class SupabaseWordRepository implements WordRepository {
         translations: word.translations,
         sentences_source: word.sentencesSource,
         sentences_german: word.sentencesGerman,
-        deck: word.deck,
+        deck_id: word.deckId,
         status: word.status,
         exported_at: word.exportedAt?.toISOString() ?? null,
       })

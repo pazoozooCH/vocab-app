@@ -12,18 +12,20 @@ import { generateApkg } from '../../infrastructure/anki/generateApkg'
 
 type DeckFilter = string
 
-function parseDeckFilter(filter: DeckFilter): { deck?: string; language?: Language } {
+function parseDeckFilter(filter: DeckFilter): { deckId?: string; language?: Language } {
   if (!filter) return {}
   if (filter === Language.EN || filter === Language.FR) return { language: filter }
-  if (filter.startsWith('deck:')) return { deck: filter.slice(5) }
+  if (filter.startsWith('deck:')) return { deckId: filter.slice(5) }
   return {}
 }
 
-function filterLabel(filter: string): string {
+import { getDeckName } from '../hooks/useDeckName'
+
+function filterLabel(filter: string, decks: import('../../domain/entities/Deck').Deck[]): string {
   if (!filter) return 'All decks'
   if (filter === Language.EN) return 'All English decks'
   if (filter === Language.FR) return 'All French decks'
-  if (filter.startsWith('deck:')) return filter.slice(5)
+  if (filter.startsWith('deck:')) return getDeckName(filter.slice(5), decks) || filter.slice(5)
   return filter
 }
 
@@ -36,13 +38,13 @@ export function ExportPage() {
   const [exports, setExports] = useState<ExportEntity[]>([])
   const [exportWords, setExportWords] = useState<Record<string, Word[]>>({})
 
-  const { deck: filterDeck, language: filterLanguage } = useMemo(
+  const { deckId: filterDeckId, language: filterLanguage } = useMemo(
     () => parseDeckFilter(deckFilter),
     [deckFilter],
   )
 
   const { words: allPending } = useWords({
-    deck: filterDeck || undefined,
+    deckId: filterDeckId || undefined,
     status: WordStatus.Pending,
   })
 
@@ -81,7 +83,7 @@ export function ExportPage() {
     setExporting(true)
     try {
       // Determine deck name for the .apkg
-      const deckName = filterDeck || filterLabel(deckFilter)
+      const deckName = filterLabel(deckFilter, decks)
 
       // Generate and download .apkg
       const blob = await generateApkg(pendingWords, deckName)
@@ -136,7 +138,7 @@ export function ExportPage() {
           <>
             <option value="EN">{'\uD83C\uDDEC\uD83C\uDDE7'} English</option>
             {enDecks.map((d) => (
-              <option key={d.id} value={`deck:${d.name}`}>{'\u00A0\u00A0\u00A0\u00A0'}{d.name}</option>
+              <option key={d.id} value={`deck:${d.id}`}>{'\u00A0\u00A0\u00A0\u00A0'}{d.name}</option>
             ))}
           </>
         )}
@@ -144,7 +146,7 @@ export function ExportPage() {
           <>
             <option value="FR">{'\uD83C\uDDEB\uD83C\uDDF7'} French</option>
             {frDecks.map((d) => (
-              <option key={d.id} value={`deck:${d.name}`}>{'\u00A0\u00A0\u00A0\u00A0'}{d.name}</option>
+              <option key={d.id} value={`deck:${d.id}`}>{'\u00A0\u00A0\u00A0\u00A0'}{d.name}</option>
             ))}
           </>
         )}

@@ -9,8 +9,8 @@ function createMockWordRepository(): WordRepository {
   return {
     save: vi.fn(),
     findById: vi.fn(),
-    findByDeck: vi.fn(),
-    findPendingByDeck: vi.fn(),
+    findByDeckId: vi.fn(),
+    findPendingByDeckId: vi.fn(),
     findAllByUser: vi.fn(),
     findDuplicates: vi.fn().mockResolvedValue([]),
     update: vi.fn(),
@@ -37,7 +37,7 @@ describe('addWord', () => {
       {
         word: 'hello',
         language: Language.EN,
-        deck: 'English::Basics',
+        deckId: 'deck-1',
         userId: 'user-123',
       },
       { wordRepository: wordRepo, translationService },
@@ -54,7 +54,7 @@ describe('addWord', () => {
     expect(result.translations).toEqual(['hallo'])
     expect(result.sentencesSource).toEqual(['Hello, how are you?'])
     expect(result.sentencesGerman).toEqual(['Hallo, wie geht es dir?'])
-    expect(result.deck).toBe('English::Basics')
+    expect(result.deckId).toBe('deck-1')
     expect(result.status).toBe(WordStatus.Pending)
     expect(result.userId).toBe('user-123')
   })
@@ -68,7 +68,7 @@ describe('addWord', () => {
         {
           word: '   ',
           language: Language.EN,
-          deck: 'English::Basics',
+          deckId: 'deck-1',
           userId: 'user-123',
         },
         { wordRepository: wordRepo, translationService },

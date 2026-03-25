@@ -10,7 +10,7 @@ interface WordProps {
   translations: string[]
   sentencesSource: string[]
   sentencesGerman: string[]
-  deck: string
+  deckId: string
   status: WordStatus
   createdAt: Date
   exportedAt: Date | null
@@ -24,7 +24,7 @@ export class Word {
   readonly translations: readonly string[]
   readonly sentencesSource: readonly string[]
   readonly sentencesGerman: readonly string[]
-  readonly deck: string
+  readonly deckId: string
   readonly status: WordStatus
   readonly createdAt: Date
   readonly exportedAt: Date | null
@@ -37,7 +37,7 @@ export class Word {
     this.translations = [...props.translations]
     this.sentencesSource = [...props.sentencesSource]
     this.sentencesGerman = [...props.sentencesGerman]
-    this.deck = props.deck
+    this.deckId = props.deckId
     this.status = props.status
     this.createdAt = props.createdAt
     this.exportedAt = props.exportedAt
@@ -63,7 +63,7 @@ export class Word {
       translations: [...this.translations],
       sentencesSource: [...this.sentencesSource],
       sentencesGerman: [...this.sentencesGerman],
-      deck: this.deck,
+      deckId: this.deckId,
       status: WordStatusEnum.Exported,
       createdAt: this.createdAt,
       exportedAt,

@@ -5,7 +5,7 @@ import { WordStatus as WordStatusEnum } from '../../domain/values/WordStatus'
 import { useAuth, useServices } from '../context/AppContext'
 
 interface UseWordsOptions {
-  deck?: string
+  deckId?: string
   status?: WordStatus
 }
 
@@ -22,19 +22,19 @@ export function useWords(options: UseWordsOptions = {}) {
     }
     setLoading(true)
     let result: Word[]
-    if (options.deck && options.status === WordStatusEnum.Pending) {
-      result = await wordRepository.findPendingByDeck(options.deck, user.id)
-    } else if (options.deck) {
-      result = await wordRepository.findByDeck(options.deck, user.id)
+    if (options.deckId && options.status === WordStatusEnum.Pending) {
+      result = await wordRepository.findPendingByDeckId(options.deckId, user.id)
+    } else if (options.deckId) {
+      result = await wordRepository.findByDeckId(options.deckId, user.id)
     } else {
       result = await wordRepository.findAllByUser(user.id)
     }
-    if (options.status && !(options.deck && options.status === WordStatusEnum.Pending)) {
+    if (options.status && !(options.deckId && options.status === WordStatusEnum.Pending)) {
       result = result.filter((w) => w.status === options.status)
     }
     setWords(result)
     setLoading(false)
-  }, [wordRepository, user, options.deck, options.status])
+  }, [wordRepository, user, options.deckId, options.status])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch on mount/dep change

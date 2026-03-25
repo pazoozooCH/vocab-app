@@ -7,15 +7,16 @@ import { useDecks } from '../hooks/useDecks'
 import { useWords } from '../hooks/useWords'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
+import { getDeckName } from '../hooks/useDeckName'
 import type { Word } from '../../domain/entities/Word'
 
-// Filter values: '' = all, 'EN' = all English, 'FR' = all French, 'deck:Name' = specific deck
+// Filter values: '' = all, 'EN' = all English, 'FR' = all French, 'deck:<id>' = specific deck
 type DeckFilter = string
 
-function parseDeckFilter(filter: DeckFilter): { deck?: string; language?: Language } {
+function parseDeckFilter(filter: DeckFilter): { deckId?: string; language?: Language } {
   if (!filter) return {}
   if (filter === Language.EN || filter === Language.FR) return { language: filter }
-  if (filter.startsWith('deck:')) return { deck: filter.slice(5) }
+  if (filter.startsWith('deck:')) return { deckId: filter.slice(5) }
   return {}
 }
 
@@ -26,13 +27,13 @@ export function WordListPage() {
   const [deckFilter, setDeckFilter] = usePersistedState<DeckFilter>('wordList.deck', '')
   const [status, setStatus] = useState<WordStatus | ''>('')
 
-  const { deck: filterDeck, language: filterLanguage } = useMemo(
+  const { deckId: filterDeckId, language: filterLanguage } = useMemo(
     () => parseDeckFilter(deckFilter),
     [deckFilter],
   )
 
   const { words: allWords, loading, reload } = useWords({
-    deck: filterDeck || undefined,
+    deckId: filterDeckId || undefined,
     status: (status as WordStatus) || undefined,
   })
 
@@ -66,7 +67,7 @@ export function WordListPage() {
             <>
               <option value="EN">{'\uD83C\uDDEC\uD83C\uDDE7'} English</option>
               {enDecks.map((d) => (
-                <option key={d.id} value={`deck:${d.name}`}>{'\u00A0\u00A0\u00A0\u00A0'}{d.name}</option>
+                <option key={d.id} value={`deck:${d.id}`}>{'\u00A0\u00A0\u00A0\u00A0'}{d.name}</option>
               ))}
             </>
           )}
@@ -74,7 +75,7 @@ export function WordListPage() {
             <>
               <option value="FR">{'\uD83C\uDDEB\uD83C\uDDF7'} French</option>
               {frDecks.map((d) => (
-                <option key={d.id} value={`deck:${d.name}`}>{'\u00A0\u00A0\u00A0\u00A0'}{d.name}</option>
+                <option key={d.id} value={`deck:${d.id}`}>{'\u00A0\u00A0\u00A0\u00A0'}{d.name}</option>
               ))}
             </>
           )}
@@ -112,7 +113,7 @@ export function WordListPage() {
       ) : (
         <div id="word-list" className="word-list">
           {words.map((w) => (
-            <ExpandableWordRow key={w.id} word={w} onDelete={handleDelete} />
+            <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} onDelete={handleDelete} />
           ))}
         </div>
       )}

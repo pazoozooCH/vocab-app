@@ -28,6 +28,7 @@ export async function ensureTestUser(client: SupabaseClient): Promise<void> {
 }
 
 export async function cleanupTestData(client: SupabaseClient): Promise<void> {
+  await client.from('exports').delete().eq('user_id', TEST_USER_ID)
   await client.from('words').delete().eq('user_id', TEST_USER_ID)
   await client.from('decks').delete().eq('user_id', TEST_USER_ID)
 }

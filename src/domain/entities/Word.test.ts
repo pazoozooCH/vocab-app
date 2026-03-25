@@ -12,7 +12,7 @@ describe('Word', () => {
     translations: ['hallo'],
     sentencesSource: ['Hello, how are you?'],
     sentencesGerman: ['Hallo, wie geht es dir?'],
-    deck: 'English::Basics',
+    deckId: 'deck-1',
     status: WordStatus.Pending,
     createdAt: new Date('2026-03-25'),
     exportedAt: null,
@@ -28,7 +28,7 @@ describe('Word', () => {
     expect(word.translations).toEqual(['hallo'])
     expect(word.sentencesSource).toEqual(['Hello, how are you?'])
     expect(word.sentencesGerman).toEqual(['Hallo, wie geht es dir?'])
-    expect(word.deck).toBe('English::Basics')
+    expect(word.deckId).toBe('deck-1')
     expect(word.status).toBe(WordStatus.Pending)
     expect(word.createdAt).toEqual(new Date('2026-03-25'))
     expect(word.exportedAt).toBeNull()

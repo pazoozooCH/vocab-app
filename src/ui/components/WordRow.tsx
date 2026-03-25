@@ -3,9 +3,10 @@ import { renderMarkdown } from './renderMarkdown'
 
 interface WordRowProps {
   word: Word
+  deckName?: string
 }
 
-export function WordRow({ word }: WordRowProps) {
+export function WordRow({ word, deckName }: WordRowProps) {
   return (
     <div className="word-row">
       <span className="word-row__word">{renderMarkdown(word.word)}</span>
@@ -14,7 +15,7 @@ export function WordRow({ word }: WordRowProps) {
           <span key={i}>{i > 0 && ', '}{renderMarkdown(t)}</span>
         ))}
       </span>
-      <span className="word-row__deck">{word.deck}</span>
+      {deckName && <span className="word-row__deck">{deckName}</span>}
     </div>
   )
 }

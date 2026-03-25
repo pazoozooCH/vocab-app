@@ -5,8 +5,8 @@ import { useAuth, useServices } from '../context/AppContext'
 
 interface DeckSelectorProps {
   decks: Deck[]
-  selectedDeck: string
-  onSelect: (deck: string) => void
+  selectedDeckId: string
+  onSelect: (deckId: string) => void
   onDeckCreated?: () => Promise<void> | void
   onDeckDeleted?: () => Promise<void> | void
   allowAll?: boolean
@@ -15,7 +15,7 @@ interface DeckSelectorProps {
 
 export function DeckSelector({
   decks,
-  selectedDeck,
+  selectedDeckId,
   onSelect,
   onDeckCreated,
   onDeckDeleted,
@@ -51,26 +51,23 @@ export function DeckSelector({
     setCreateError(null)
     setIsCreating(false)
     await onDeckCreated?.()
-    onSelect(deck.name)
+    onSelect(deck.id)
   }
 
   const handleDelete = async () => {
-    if (!user || !selectedDeck) return
-    const deck = decks.find((d) => d.name === selectedDeck)
+    if (!user || !selectedDeckId) return
+    const deck = decks.find((d) => d.id === selectedDeckId)
     if (!deck) return
 
-    const words = await wordRepository.findByDeck(deck.name, user.id)
+    const words = await wordRepository.findByDeckId(deck.id, user.id)
     if (words.length > 0) {
       const confirmed = confirm(
         `Delete deck "${deck.name}"? It contains ${words.length} word${words.length > 1 ? 's' : ''} that will also be deleted.`,
       )
       if (!confirmed) return
-      // Delete all words in the deck
-      for (const w of words) {
-        await wordRepository.delete(w.id, user.id)
-      }
     }
 
+    // Cascade delete: words are automatically deleted by the foreign key constraint
     await deckRepository.delete(deck.id, user.id)
     onSelect('')
     await onDeckDeleted?.()
@@ -82,7 +79,7 @@ export function DeckSelector({
         <select
           id="deck-select"
           className="deck-selector__select"
-          value={selectedDeck}
+          value={selectedDeckId}
           onChange={(e) => {
             if (e.target.value === '__new__') {
               setIsCreating(true)
@@ -98,19 +95,19 @@ export function DeckSelector({
             </option>
           )}
           {decks.map((d) => (
-            <option key={d.id} value={d.name}>
+            <option key={d.id} value={d.id}>
               {d.name}
             </option>
           ))}
           {language && <option value="__new__">+ New deck</option>}
         </select>
-        {selectedDeck && (
+        {selectedDeckId && (
           <button
             id="delete-deck-btn"
             className="btn btn--small btn--danger btn--icon"
             onClick={handleDelete}
-            title={`Delete deck "${selectedDeck}"`}
-            aria-label={`Delete deck "${selectedDeck}"`}
+            title="Delete deck"
+            aria-label="Delete deck"
           >
             &#x1F5D1;&#xFE0E;
           </button>

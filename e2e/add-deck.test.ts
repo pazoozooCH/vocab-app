@@ -22,8 +22,8 @@ test('create a new deck and verify it is selected in the dropdown', async ({ pag
   await deckInput.fill('English::TestDeck')
   await page.click('#create-deck-btn')
 
-  // Verify the new deck is now selected in the dropdown
-  await expect(page.locator('#deck-select')).toHaveValue('English::TestDeck')
+  // Verify the new deck is now selected in the dropdown (value is a UUID now)
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::TestDeck')
 
   // Verify the create form is hidden
   await expect(deckInput).not.toBeVisible()

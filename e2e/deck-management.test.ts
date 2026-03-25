@@ -15,7 +15,7 @@ test('cannot create a duplicate deck', async ({ page }) => {
   await page.selectOption('#deck-select', '__new__')
   await page.locator('#new-deck-input').fill('English::Unique')
   await page.click('#create-deck-btn')
-  await expect(page.locator('#deck-select')).toHaveValue('English::Unique')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::Unique')
 
   // Try to create the same deck again
   await page.selectOption('#deck-select', '__new__')
@@ -27,7 +27,7 @@ test('cannot create a duplicate deck', async ({ page }) => {
 
   // Original deck should still be there
   await page.click('#cancel-deck-btn')
-  await expect(page.locator('#deck-select')).toHaveValue('English::Unique')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::Unique')
 })
 
 test('delete an empty deck', async ({ page }) => {
@@ -38,13 +38,13 @@ test('delete an empty deck', async ({ page }) => {
   await page.selectOption('#deck-select', '__new__')
   await page.locator('#new-deck-input').fill('English::ToDelete')
   await page.click('#create-deck-btn')
-  await expect(page.locator('#deck-select')).toHaveValue('English::ToDelete')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::ToDelete')
 
   // Delete it — no confirmation needed since it's empty
   await page.click('#delete-deck-btn')
 
   // Deck should be gone, selector reset
-  await expect(page.locator('#deck-select')).not.toHaveValue('English::ToDelete')
+  await expect(page.locator('#deck-select option:checked')).not.toHaveText('English::ToDelete')
 })
 
 test('delete a deck with words asks for confirmation', async ({ page }) => {
@@ -77,5 +77,5 @@ test('delete a deck with words asks for confirmation', async ({ page }) => {
   await page.click('#delete-deck-btn')
 
   // Deck and its words should be gone
-  await expect(page.locator('#deck-select')).not.toHaveValue('English::WithWords')
+  await expect(page.locator('#deck-select option:checked')).not.toHaveText('English::WithWords')
 })

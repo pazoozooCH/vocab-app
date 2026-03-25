@@ -8,6 +8,7 @@ import { useDecks } from '../hooks/useDecks'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { DeckSelector } from '../components/DeckSelector'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
+import { getDeckName } from '../hooks/useDeckName'
 
 type InputMode = 'single' | 'batch'
 
@@ -18,7 +19,7 @@ export function AddWordPage() {
   const [word, setWord] = useState('')
   const [batchInput, setBatchInput] = useState('')
   const [language, setLanguage] = usePersistedState<Language>('addWord.language', Language.EN)
-  const [deck, setDeck] = usePersistedState<string>('addWord.deck', '')
+  const [deckId, setDeckId] = usePersistedState<string>('addWord.deckId', '')
   const { decks, reload: reloadDecks } = useDecks(language)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -41,14 +42,14 @@ export function AddWordPage() {
 
   const handleSingleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !word.trim() || !deck) return
+    if (!user || !word.trim() || !deckId) return
 
     setIsLoading(true)
     setError(null)
     setDuplicatesMap({})
     try {
       const result = await addWord(
-        { word: word.trim(), language, deck, userId: user.id },
+        { word: word.trim(), language, deckId, userId: user.id },
         { wordRepository, translationService },
       )
       setResults([result])
@@ -63,7 +64,7 @@ export function AddWordPage() {
 
   const handleBatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !batchInput.trim() || !deck) return
+    if (!user || !batchInput.trim() || !deckId) return
 
     const words = batchInput
       .split(',')
@@ -85,7 +86,7 @@ export function AddWordPage() {
       setBatchProgress({ current: i + 1, total: words.length })
       try {
         const result = await addWord(
-          { word: words[i], language, deck, userId: user.id },
+          { word: words[i], language, deckId, userId: user.id },
           { wordRepository, translationService },
         )
         added.push(result)
@@ -133,7 +134,7 @@ export function AddWordPage() {
       translations: translation.translations,
       sentencesSource: translation.sentencesSource,
       sentencesGerman: translation.sentencesGerman,
-      deck: originalWord.deck,
+      deckId: originalWord.deckId,
       status: originalWord.status as typeof WordStatus.Pending | typeof WordStatus.Exported,
       createdAt: originalWord.createdAt,
       exportedAt: originalWord.exportedAt,
@@ -157,7 +158,7 @@ export function AddWordPage() {
             id="lang-en"
             type="button"
             className={`language-toggle__btn ${language === Language.EN ? 'language-toggle__btn--active' : ''}`}
-            onClick={() => { setLanguage(Language.EN); setDeck('') }}
+            onClick={() => { setLanguage(Language.EN); setDeckId('') }}
           >
             <span className="language-toggle__flag" role="img" aria-label="English">&#x1F1EC;&#x1F1E7;</span> EN
           </button>
@@ -165,7 +166,7 @@ export function AddWordPage() {
             id="lang-fr"
             type="button"
             className={`language-toggle__btn ${language === Language.FR ? 'language-toggle__btn--active' : ''}`}
-            onClick={() => { setLanguage(Language.FR); setDeck('') }}
+            onClick={() => { setLanguage(Language.FR); setDeckId('') }}
           >
             <span className="language-toggle__flag" role="img" aria-label="French">&#x1F1EB;&#x1F1F7;</span> FR
           </button>
@@ -173,8 +174,8 @@ export function AddWordPage() {
 
         <DeckSelector
           decks={decks}
-          selectedDeck={deck}
-          onSelect={setDeck}
+          selectedDeckId={deckId}
+          onSelect={setDeckId}
           onDeckCreated={reloadDecks}
           onDeckDeleted={reloadDecks}
           language={language}
@@ -231,7 +232,7 @@ export function AddWordPage() {
           disabled={
             isLoading ||
             !(mode === 'single' ? word.trim() : batchInput.trim()) ||
-            !deck
+            !deckId
           }
         >
           {isLoading
@@ -250,7 +251,7 @@ export function AddWordPage() {
         <div id="add-word-result" className="add-word-result">
           <h3>Added ({results.length})</h3>
           {results.map((w) => (
-            <ExpandableWordRow key={w.id} word={w} defaultExpanded duplicates={duplicatesMap[w.id]} onRefine={handleRefine} onDelete={handleDelete} />
+            <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} defaultExpanded duplicates={duplicatesMap[w.id]} onRefine={handleRefine} onDelete={handleDelete} />
           ))}
         </div>
       )}

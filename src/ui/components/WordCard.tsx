@@ -5,12 +5,13 @@ import { WordRow } from './WordRow'
 
 interface WordCardProps {
   word: Word
+  deckName?: string
   duplicates?: Word[]
   onDelete?: (word: Word) => void
   onRefine?: (word: Word, context: string) => Promise<void>
 }
 
-export function WordCard({ word, duplicates, onDelete, onRefine }: WordCardProps) {
+export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: WordCardProps) {
   const [isRefining, setIsRefining] = useState(false)
   const [context, setContext] = useState('')
   const [loading, setLoading] = useState(false)
@@ -54,7 +55,7 @@ export function WordCard({ word, duplicates, onDelete, onRefine }: WordCardProps
       </div>
 
       <div className="word-card__meta">
-        <span className="word-card__deck">{word.deck}</span>
+        {deckName && <span className="word-card__deck">{deckName}</span>}
         <div className="word-card__actions">
           {duplicates && duplicates.length > 0 && (
             <button

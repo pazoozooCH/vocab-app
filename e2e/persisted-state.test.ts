@@ -43,14 +43,14 @@ test('persists deck selection across navigation', async ({ page }) => {
   await page.selectOption('#deck-select', '__new__')
   await page.locator('#new-deck-input').fill('English::Persist')
   await page.click('#create-deck-btn')
-  await expect(page.locator('#deck-select')).toHaveValue('English::Persist')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::Persist')
 
   // Navigate away and back
   await page.click('#nav-words')
   await page.click('#nav-add')
 
   // Deck should still be selected
-  await expect(page.locator('#deck-select')).toHaveValue('English::Persist')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::Persist')
 })
 
 test('persists batch mode across navigation', async ({ page }) => {
@@ -76,15 +76,17 @@ test('persists word list deck filter across navigation', async ({ page }) => {
   await page.locator('#new-deck-input').fill('English::FilterTest')
   await page.click('#create-deck-btn')
 
-  // Go to word list and select the deck filter
+  // Go to word list and select the deck filter (value is deck:<uuid> now)
   await page.click('#nav-words')
-  await page.selectOption('#deck-select', 'deck:English::FilterTest')
-  await expect(page.locator('#deck-select')).toHaveValue('deck:English::FilterTest')
+  const filterOption = page.locator('#deck-select option', { hasText: 'English::FilterTest' })
+  const filterValue = await filterOption.getAttribute('value')
+  await page.selectOption('#deck-select', filterValue!)
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::FilterTest')
 
   // Navigate away and back
   await page.click('#nav-add')
   await page.click('#nav-words')
 
   // Filter should still be set
-  await expect(page.locator('#deck-select')).toHaveValue('deck:English::FilterTest')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::FilterTest')
 })

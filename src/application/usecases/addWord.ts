@@ -7,7 +7,7 @@ import type { TranslationService } from '../ports/TranslationService'
 interface AddWordInput {
   word: string
   language: Language
-  deck: string
+  deckId: string
   userId: string
   context?: string
 }
@@ -40,7 +40,7 @@ export async function addWord(
     translations: translation.translations,
     sentencesSource: translation.sentencesSource,
     sentencesGerman: translation.sentencesGerman,
-    deck: input.deck,
+    deckId: input.deckId,
     status: WordStatus.Pending,
     createdAt: new Date(),
     exportedAt: null,

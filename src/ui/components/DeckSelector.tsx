@@ -92,8 +92,8 @@ export function DeckSelector({
           }}
         >
           {allowAll && <option value="">All decks</option>}
-          {!allowAll && !selectedDeck && (
-            <option value="" disabled>
+          {!allowAll && (
+            <option value="" disabled={!!selectedDeck}>
               Select a deck…
             </option>
           )}

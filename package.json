@@ -12,6 +12,7 @@
     "lint": "eslint . && tsc -b --noEmit",
     "format": "prettier --write .",
     "preview": "vite preview",
+    "check": "bash scripts/ci-check.sh",
     "db:start": "npx supabase start",
     "db:stop": "npx supabase stop",
     "db:restart": "npx supabase stop && npx supabase start",

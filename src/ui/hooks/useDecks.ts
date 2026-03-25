@@ -23,6 +23,7 @@ export function useDecks(language?: Language) {
   }, [deckRepository, user, language])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch on mount/dep change
     reload()
   }, [reload])
 

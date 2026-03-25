@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- hooks co-exported with provider is standard React pattern */
 import {
   createContext,
   useContext,

@@ -37,6 +37,7 @@ export function useWords(options: UseWordsOptions = {}) {
   }, [wordRepository, user, options.deck, options.status])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch on mount/dep change
     reload()
   }, [reload])
 

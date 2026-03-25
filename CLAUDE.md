@@ -100,6 +100,7 @@ src/
 ## Key Commands
 
 ```bash
+npm run check        # Quiet CI: build + lint + test + e2e (errors only, use this for validation)
 npm run dev          # Start local dev server
 npm test             # Run unit/integration tests (Vitest)
 npm run test:e2e     # Run Playwright e2e tests
@@ -111,4 +112,5 @@ npm run db:start     # Start local Supabase (Docker)
 npm run db:stop      # Stop local Supabase
 npm run db:restart   # Restart local Supabase (picks up config changes)
 npm run db:reset     # Reset local DB and re-run all migrations
+npm run db:push      # Push migrations to cloud Supabase (production)
 ```

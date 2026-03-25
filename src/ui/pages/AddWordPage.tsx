@@ -10,11 +10,10 @@ import { WordCard } from '../components/WordCard'
 export function AddWordPage() {
   const { user } = useAuth()
   const { wordRepository, translationService } = useServices()
-  const { decks, reload: reloadDecks } = useDecks()
-
   const [word, setWord] = useState('')
   const [language, setLanguage] = useState<Language>(Language.EN)
   const [deck, setDeck] = useState('')
+  const { decks, reload: reloadDecks } = useDecks(language)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<Word | null>(null)
@@ -46,14 +45,14 @@ export function AddWordPage() {
           <button
             type="button"
             className={`language-toggle__btn ${language === Language.EN ? 'language-toggle__btn--active' : ''}`}
-            onClick={() => setLanguage(Language.EN)}
+            onClick={() => { setLanguage(Language.EN); setDeck('') }}
           >
             EN
           </button>
           <button
             type="button"
             className={`language-toggle__btn ${language === Language.FR ? 'language-toggle__btn--active' : ''}`}
-            onClick={() => setLanguage(Language.FR)}
+            onClick={() => { setLanguage(Language.FR); setDeck('') }}
           >
             FR
           </button>
@@ -74,6 +73,7 @@ export function AddWordPage() {
           selectedDeck={deck}
           onSelect={setDeck}
           onDeckCreated={reloadDecks}
+          language={language}
         />
 
         <button

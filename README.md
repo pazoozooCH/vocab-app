@@ -134,11 +134,12 @@ src/
 | exported_at      | datetime | When last exported to Anki         |
 
 ### Deck
-| Field   | Type   | Description                       |
-|---------|--------|-----------------------------------|
-| id      | UUID   | Primary key                       |
-| user_id | UUID   | Foreign key → Supabase auth.users |
-| name    | string | Deck name                         |
+| Field    | Type   | Description                                |
+|----------|--------|--------------------------------------------|
+| id       | UUID   | Primary key                                |
+| user_id  | UUID   | Foreign key → Supabase auth.users          |
+| name     | string | Deck name (Anki hierarchical, e.g. `English::Verbs`) |
+| language | enum   | `EN` or `FR` — decks are per language      |
 
 ## API
 

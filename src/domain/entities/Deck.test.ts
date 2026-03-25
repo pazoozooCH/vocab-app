@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { Deck } from './Deck'
+import { Language } from '../values/Language'
 
 describe('Deck', () => {
   const validProps = {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     name: 'English::Basics',
     userId: 'u1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    language: Language.EN,
   }
 
   it('creates a deck with valid properties', () => {
@@ -14,6 +16,7 @@ describe('Deck', () => {
     expect(deck.id).toBe(validProps.id)
     expect(deck.name).toBe('English::Basics')
     expect(deck.userId).toBe(validProps.userId)
+    expect(deck.language).toBe(Language.EN)
   })
 
   it('rejects an empty name', () => {
@@ -38,6 +41,7 @@ describe('Deck', () => {
     const renamed = deck.rename('English::Advanced')
 
     expect(renamed.name).toBe('English::Advanced')
+    expect(renamed.language).toBe(Language.EN)
     // original is unchanged
     expect(deck.name).toBe('English::Basics')
   })

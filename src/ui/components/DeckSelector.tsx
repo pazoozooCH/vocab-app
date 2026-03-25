@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Deck } from '../../domain/entities/Deck'
+import type { Language } from '../../domain/values/Language'
 import { useAuth, useServices } from '../context/AppContext'
 
 interface DeckSelectorProps {
@@ -8,6 +9,7 @@ interface DeckSelectorProps {
   onSelect: (deck: string) => void
   onDeckCreated?: () => void
   allowAll?: boolean
+  language?: Language
 }
 
 export function DeckSelector({
@@ -16,6 +18,7 @@ export function DeckSelector({
   onSelect,
   onDeckCreated,
   allowAll,
+  language,
 }: DeckSelectorProps) {
   const { deckRepository } = useServices()
   const { user } = useAuth()
@@ -23,11 +26,12 @@ export function DeckSelector({
   const [newDeckName, setNewDeckName] = useState('')
 
   const handleCreate = async () => {
-    if (!user || !newDeckName.trim()) return
+    if (!user || !newDeckName.trim() || !language) return
     const deck = Deck.create({
       id: crypto.randomUUID(),
       userId: user.id,
       name: newDeckName.trim(),
+      language,
     })
     await deckRepository.save(deck)
     setNewDeckName('')
@@ -60,7 +64,7 @@ export function DeckSelector({
             {d.name}
           </option>
         ))}
-        <option value="__new__">+ New deck</option>
+        {language && <option value="__new__">+ New deck</option>}
       </select>
 
       {isCreating && (
@@ -68,7 +72,7 @@ export function DeckSelector({
           <input
             className="deck-selector__input"
             type="text"
-            placeholder="Deck name"
+            placeholder="e.g. English::Vocabulary or French::Verbs"
             value={newDeckName}
             onChange={(e) => setNewDeckName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Deck } from '../../domain/entities/Deck'
+import type { Language } from '../../domain/values/Language'
 import { useAuth, useServices } from '../context/AppContext'
 
-export function useDecks() {
+export function useDecks(language?: Language) {
   const { deckRepository } = useServices()
   const { user } = useAuth()
   const [decks, setDecks] = useState<Deck[]>([])
@@ -11,10 +12,12 @@ export function useDecks() {
   const reload = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const result = await deckRepository.findAllByUser(user.id)
+    const result = language
+      ? await deckRepository.findByLanguage(language, user.id)
+      : await deckRepository.findAllByUser(user.id)
     setDecks(result)
     setLoading(false)
-  }, [deckRepository, user])
+  }, [deckRepository, user, language])
 
   useEffect(() => {
     reload()

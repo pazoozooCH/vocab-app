@@ -1,11 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Deck } from '../../domain/entities/Deck'
+import type { Language } from '../../domain/values/Language'
 import type { DeckRepository } from '../../application/ports/DeckRepository'
 
 interface DeckRow {
   id: string
   user_id: string
   name: string
+  language: string
 }
 
 function toDomain(row: DeckRow): Deck {
@@ -13,6 +15,7 @@ function toDomain(row: DeckRow): Deck {
     id: row.id,
     userId: row.user_id,
     name: row.name,
+    language: row.language as Language,
   })
 }
 
@@ -28,6 +31,7 @@ export class SupabaseDeckRepository implements DeckRepository {
       id: deck.id,
       user_id: deck.userId,
       name: deck.name,
+      language: deck.language,
     })
     if (error) throw error
   }
@@ -48,6 +52,17 @@ export class SupabaseDeckRepository implements DeckRepository {
     const { data, error } = await this.client
       .from('decks')
       .select()
+      .eq('user_id', userId)
+      .order('name', { ascending: true })
+    if (error) throw error
+    return data.map(toDomain)
+  }
+
+  async findByLanguage(language: Language, userId: string): Promise<Deck[]> {
+    const { data, error } = await this.client
+      .from('decks')
+      .select()
+      .eq('language', language)
       .eq('user_id', userId)
       .order('name', { ascending: true })
     if (error) throw error

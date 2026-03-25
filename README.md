@@ -230,6 +230,22 @@ Both local development and integration tests share the same local Supabase insta
 
 This means `npx supabase start` must be running before you run integration tests (`npm test`).
 
+### Commands
+
+```bash
+npm run dev          # Start Vite dev server (http://127.0.0.1:5173)
+npm test             # Run unit + integration tests (Vitest)
+npm run test:watch   # Run tests in watch mode
+npm run lint         # ESLint + type-check
+npm run build        # Production build
+npm run format       # Prettier format all files
+
+npm run db:start     # Start local Supabase (Docker)
+npm run db:stop      # Stop local Supabase
+npm run db:restart   # Restart local Supabase (picks up config changes)
+npm run db:reset     # Reset local DB and re-run all migrations
+```
+
 ## Deployment
 
 1. Create a Supabase project at https://supabase.com (free tier)

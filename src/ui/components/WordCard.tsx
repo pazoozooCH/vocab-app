@@ -41,7 +41,7 @@ export function WordCard({ word, onDelete, onRefine }: WordCardProps) {
   return (
     <div className="word-card">
       <div className="word-card__header">
-        <span className="word-card__word">{word.word}</span>
+        <span className="word-card__word">{renderMarkdown(word.word)}</span>
         <span className={`badge badge--${word.language.toLowerCase()}`}>
           {word.language}
         </span>

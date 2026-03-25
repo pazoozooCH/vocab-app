@@ -35,7 +35,7 @@ export async function addWord(
   const word = Word.create({
     id: crypto.randomUUID(),
     userId: input.userId,
-    word: trimmed,
+    word: translation.word ?? trimmed,
     language: input.language,
     translations: translation.translations,
     sentencesSource: translation.sentencesSource,

@@ -91,8 +91,11 @@ export function AddWordPage() {
   const handleRefine = async (originalWord: Word, context: string) => {
     if (!user) return
 
+    // Strip any existing classifier from the word before re-translating
+    const bareWord = originalWord.word.replace(/\s*_\[.*?\]_$/, '')
+
     const translation = await translationService.translate(
-      originalWord.word,
+      bareWord,
       originalWord.language,
       context,
     )
@@ -100,7 +103,7 @@ export function AddWordPage() {
     const refined = Word.create({
       id: originalWord.id,
       userId: originalWord.userId,
-      word: originalWord.word,
+      word: translation.word ?? bareWord,
       language: originalWord.language,
       translations: translation.translations,
       sentencesSource: translation.sentencesSource,

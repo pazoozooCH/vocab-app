@@ -1,24 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
-import { exportDeck } from './exportDeck'
+import { createExport, confirmExport, failExport } from './exportDeck'
 import type { WordRepository } from '../ports/WordRepository'
+import type { ExportRepository } from '../ports/ExportRepository'
 import { Word } from '../../domain/entities/Word'
+import { Export } from '../../domain/entities/Export'
 import { Language } from '../../domain/values/Language'
 import { WordStatus } from '../../domain/values/WordStatus'
-
-function createMockWordRepository(
-  pendingWords: Word[] = [],
-): WordRepository {
-  return {
-    save: vi.fn(),
-    findById: vi.fn(),
-    findByDeck: vi.fn(),
-    findPendingByDeck: vi.fn().mockResolvedValue(pendingWords),
-    findAllByUser: vi.fn(),
-    findDuplicates: vi.fn().mockResolvedValue([]),
-    update: vi.fn(),
-    delete: vi.fn(),
-  }
-}
+import { ExportStatus } from '../../domain/values/ExportStatus'
 
 function makeWord(overrides: Partial<{ word: string; id: string }> = {}): Word {
   return Word.create({
@@ -36,39 +24,98 @@ function makeWord(overrides: Partial<{ word: string; id: string }> = {}): Word {
   })
 }
 
-describe('exportDeck', () => {
-  it('returns pending words and marks them as exported', async () => {
-    const words = [
-      makeWord({ id: 'word-1', word: 'hello' }),
-      makeWord({ id: 'word-2', word: 'goodbye' }),
-    ]
-    const wordRepo = createMockWordRepository(words)
+function createMockExportRepository(): ExportRepository {
+  return {
+    save: vi.fn(),
+    findById: vi.fn(),
+    findAllByUser: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  }
+}
 
-    const result = await exportDeck(
-      { deck: 'English::Basics', userId: 'user-123' },
-      { wordRepository: wordRepo },
+function createMockWordRepository(): WordRepository {
+  return {
+    save: vi.fn(),
+    findById: vi.fn(),
+    findByDeck: vi.fn(),
+    findPendingByDeck: vi.fn(),
+    findAllByUser: vi.fn(),
+    findDuplicates: vi.fn().mockResolvedValue([]),
+    update: vi.fn(),
+    delete: vi.fn(),
+  }
+}
+
+describe('createExport', () => {
+  it('creates an export record with pending status', async () => {
+    const exportRepo = createMockExportRepository()
+    const words = [makeWord({ id: 'w1' }), makeWord({ id: 'w2' })]
+
+    const result = await createExport(
+      { words, deckFilter: 'deck:English::Basics', userId: 'user-123' },
+      { exportRepository: exportRepo },
     )
 
-    expect(wordRepo.findPendingByDeck).toHaveBeenCalledWith(
-      'English::Basics',
-      'user-123',
-    )
-    expect(result).toHaveLength(2)
-    expect(result[0].status).toBe(WordStatus.Exported)
-    expect(result[1].status).toBe(WordStatus.Exported)
-    expect(result[0].exportedAt).toBeInstanceOf(Date)
-    expect(wordRepo.update).toHaveBeenCalledTimes(2)
+    expect(exportRepo.save).toHaveBeenCalledOnce()
+    expect(result.status).toBe(ExportStatus.PendingConfirmation)
+    expect(result.wordIds).toEqual(['w1', 'w2'])
+    expect(result.wordCount).toBe(2)
   })
+})
 
-  it('returns empty array when no pending words', async () => {
-    const wordRepo = createMockWordRepository([])
+describe('confirmExport', () => {
+  it('marks words as exported and confirms the export', async () => {
+    const exp = Export.create({
+      id: 'exp-1',
+      userId: 'user-123',
+      status: ExportStatus.PendingConfirmation,
+      wordIds: ['w1'],
+      deckFilter: '',
+      wordCount: 1,
+      createdAt: new Date(),
+    })
+    const word = makeWord({ id: 'w1' })
 
-    const result = await exportDeck(
-      { deck: 'English::Basics', userId: 'user-123' },
-      { wordRepository: wordRepo },
-    )
+    const exportRepo = createMockExportRepository()
+    const wordRepo = createMockWordRepository()
+    vi.mocked(exportRepo.findById).mockResolvedValue(exp)
+    vi.mocked(wordRepo.findById).mockResolvedValue(word)
 
-    expect(result).toEqual([])
-    expect(wordRepo.update).not.toHaveBeenCalled()
+    await confirmExport('exp-1', 'user-123', {
+      exportRepository: exportRepo,
+      wordRepository: wordRepo,
+    })
+
+    expect(wordRepo.update).toHaveBeenCalledOnce()
+    const updatedWord = vi.mocked(wordRepo.update).mock.calls[0][0]
+    expect(updatedWord.status).toBe(WordStatus.Exported)
+
+    expect(exportRepo.update).toHaveBeenCalledOnce()
+    const updatedExport = vi.mocked(exportRepo.update).mock.calls[0][0]
+    expect(updatedExport.status).toBe(ExportStatus.Confirmed)
+  })
+})
+
+describe('failExport', () => {
+  it('marks the export as failed', async () => {
+    const exp = Export.create({
+      id: 'exp-1',
+      userId: 'user-123',
+      status: ExportStatus.PendingConfirmation,
+      wordIds: ['w1'],
+      deckFilter: '',
+      wordCount: 1,
+      createdAt: new Date(),
+    })
+
+    const exportRepo = createMockExportRepository()
+    vi.mocked(exportRepo.findById).mockResolvedValue(exp)
+
+    await failExport('exp-1', 'user-123', { exportRepository: exportRepo })
+
+    expect(exportRepo.update).toHaveBeenCalledOnce()
+    const updated = vi.mocked(exportRepo.update).mock.calls[0][0]
+    expect(updated.status).toBe(ExportStatus.Failed)
   })
 })

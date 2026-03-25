@@ -11,13 +11,16 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import { SupabaseWordRepository } from '../../infrastructure/supabase/SupabaseWordRepository'
 import { SupabaseDeckRepository } from '../../infrastructure/supabase/SupabaseDeckRepository'
 import { FetchTranslationService } from '../../infrastructure/api/FetchTranslationService'
+import { SupabaseExportRepository } from '../../infrastructure/supabase/SupabaseExportRepository'
 import type { WordRepository } from '../../application/ports/WordRepository'
 import type { DeckRepository } from '../../application/ports/DeckRepository'
+import type { ExportRepository } from '../../application/ports/ExportRepository'
 import type { TranslationService } from '../../application/ports/TranslationService'
 
 interface AppServices {
   wordRepository: WordRepository
   deckRepository: DeckRepository
+  exportRepository: ExportRepository
   translationService: TranslationService
   supabase: SupabaseClient
 }
@@ -53,6 +56,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const services = useMemo<AppServices>(() => {
     const wordRepository = new SupabaseWordRepository(supabase)
     const deckRepository = new SupabaseDeckRepository(supabase)
+    const exportRepository = new SupabaseExportRepository(supabase)
     const translationService = new FetchTranslationService(
       '',
       async () => {
@@ -60,7 +64,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return data.session?.access_token ?? null
       },
     )
-    return { wordRepository, deckRepository, translationService, supabase }
+    return { wordRepository, deckRepository, exportRepository, translationService, supabase }
   }, [supabase])
 
   // Check whitelist when user changes

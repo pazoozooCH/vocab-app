@@ -130,6 +130,65 @@ test.describe('Add Word flow', () => {
     await expect(page.locator('#error-message')).toContainText('temporarily busy')
   })
 
+  test('refine a word with context adds classifier to source word', async ({ page }) => {
+    // First request: generic translation without classifier
+    let requestCount = 0
+    await page.route('**/api/translate', async (route) => {
+      requestCount++
+      if (requestCount === 1) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            word: 'battery',
+            translations: ['Batterie', 'Akku', 'Körperverletzung _[Law]_'],
+            sentencesSource: ['1. The **battery** is low.'],
+            sentencesGerman: ['1. Die **Batterie** ist leer.'],
+          }),
+        })
+      }
+      // Second request: refined with legal context
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          word: 'battery _[Law]_',
+          translations: ['Körperverletzung _[Law]_'],
+          sentencesSource: ['1. He was charged with **battery**.'],
+          sentencesGerman: ['1. Er wurde wegen **Körperverletzung** angeklagt.'],
+        }),
+      })
+    })
+
+    await page.goto('/')
+    await page.click('#lang-en')
+    await page.selectOption('#deck-select', '__new__')
+    await page.locator('#new-deck-input').fill('English::Refine')
+    await page.click('#create-deck-btn')
+
+    // Add the word
+    await page.locator('#word-input').fill('battery')
+    await page.click('#add-word-btn')
+    const result = page.locator('#add-word-result')
+    await expect(result).toBeVisible()
+
+    // Word should show without classifier initially
+    await expect(result.locator('.word-card__word')).toHaveText('battery')
+
+    // Click refine and add context
+    await page.click('#refine-btn')
+    await page.locator('#refine-context-input').fill('legal')
+    await page.click('#refine-submit-btn')
+
+    // After refinement, word should show with classifier
+    await expect(result.locator('.word-card__word')).toContainText('battery')
+    await expect(result.locator('.word-card__word em')).toHaveText('[Law]')
+
+    // Translation should also have the classifier
+    await expect(result.locator('.word-card__translations')).toContainText('Körperverletzung')
+    await expect(result.locator('.word-card__translations em')).toHaveText('[Law]')
+  })
+
   test('added word appears in the word list', async ({ page }) => {
     await mockTranslateApi(page)
     await page.goto('/')

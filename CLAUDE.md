@@ -55,6 +55,11 @@ src/
 - Run tests before committing: `npm test`
 - Run e2e tests: `npm run test:e2e`
 
+### Documentation
+
+- Keep `README.md` up to date whenever development, setup, or deployment processes change
+- If a change affects how someone would set up, run, test, or deploy the app, update the README in the same commit
+
 ### Git Practices
 
 - Commit after every meaningful unit of work (new entity, completed use case, passing test suite, etc.)
@@ -100,6 +105,10 @@ npm test             # Run unit/integration tests (Vitest)
 npm run test:e2e     # Run Playwright e2e tests
 npm run lint         # ESLint + type-check
 npm run build        # Production build
-npm run deploy       # Deploy to Vercel
-npm run db:migrate   # Push Supabase migrations
+npm run format       # Prettier format all files
+
+npm run db:start     # Start local Supabase (Docker)
+npm run db:stop      # Stop local Supabase
+npm run db:restart   # Restart local Supabase (picks up config changes)
+npm run db:reset     # Reset local DB and re-run all migrations
 ```

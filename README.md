@@ -258,18 +258,40 @@ On failure, Playwright saves screenshots, video, and a full trace to `test-resul
 
 ## Deployment
 
-1. Create a Supabase project at https://supabase.com (free tier)
-   - Enable the **Data API** (required — the frontend uses the Supabase client SDK which communicates via PostgREST)
-   - Enable **automatic RLS** (ensures every new table has Row Level Security enabled by default)
-2. In Supabase → Authentication → Providers: enable **Google OAuth** and disable **Email auth** (enabled by default, not needed)
-   - Create a Google Cloud project (free) at [Google Cloud Console](https://console.cloud.google.com/) (any Google account works)
-   - Go to APIs & Credentials → Create OAuth Client ID (application type: Web application)
-   - Add authorized redirect URIs for both environments:
+### One-time setup
+
+1. **Supabase** (already done if you followed Getting Started)
+   - Create a Supabase project at https://supabase.com (free tier)
+   - Enable the **Data API** and **automatic RLS**
+   - Enable **Google OAuth**, disable **Email auth**
+
+2. **Google OAuth** (already done if you followed Getting Started)
+   - Create OAuth Client ID at [Google Cloud Console](https://console.cloud.google.com/)
+   - Add authorized redirect URIs:
      - Production: `https://<project-ref>.supabase.co/auth/v1/callback`
      - Local: `http://127.0.0.1:54321/auth/v1/callback`
-   - Copy the **Client ID** and **Client Secret** into:
-     - Supabase cloud dashboard → Google provider settings
-     - `.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (used by local Supabase via `config.toml`)
-3. Run the database migrations (SQL in `supabase/migrations/`)
-4. Deploy to Vercel: connect the GitHub repo, set environment variables
-5. Add the Vercel URL to Supabase → Authentication → URL Configuration
+   - Add the **Client ID** and **Client Secret** to both cloud Supabase and local `.env`
+
+3. **Vercel**
+   - Go to [vercel.com/new](https://vercel.com/new) and import the GitHub repo (`pazoozooCH/vocab-app`)
+   - Framework preset: **Vite**
+   - Set environment variables in Vercel project settings:
+     - `VITE_SUPABASE_URL` — your cloud Supabase URL (`https://<project-ref>.supabase.co`)
+     - `VITE_SUPABASE_ANON_KEY` — your cloud Supabase anon/publishable key
+     - `GEMINI_API_KEY` — your Gemini API key
+   - Deploy
+
+4. **Post-deploy**
+   - Copy the Vercel production URL (e.g. `https://vocab-app.vercel.app`)
+   - Add it to Supabase → Authentication → URL Configuration → Site URL
+   - Add it to Supabase → Authentication → URL Configuration → Redirect URLs
+   - Add `https://vocab-app.vercel.app` as an authorized JavaScript origin in Google Cloud Console
+
+### Continuous deployment
+
+Vercel auto-deploys on every push to `main` via GitHub integration. No manual steps needed.
+
+Database migrations are **not** auto-deployed. After adding a new migration, push it manually:
+```bash
+npx supabase db push
+```

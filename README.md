@@ -249,6 +249,7 @@ npm run db:start     # Start local Supabase (Docker)
 npm run db:stop      # Stop local Supabase
 npm run db:restart   # Restart local Supabase (picks up config changes)
 npm run db:reset     # Reset local DB and re-run all migrations
+npm run db:push      # Push migrations to cloud Supabase (production)
 ```
 
 To see the browser during e2e tests: `npx playwright test --headed`

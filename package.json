@@ -15,7 +15,8 @@
     "db:start": "npx supabase start",
     "db:stop": "npx supabase stop",
     "db:restart": "npx supabase stop && npx supabase start",
-    "db:reset": "npx supabase db reset"
+    "db:reset": "npx supabase db reset",
+    "db:push": "npx supabase db push"
   },
   "dependencies": {
     "@google/genai": "^1.46.0",

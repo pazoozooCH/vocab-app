@@ -93,13 +93,20 @@ export async function generateApkg(
   )`)
   db.run('CREATE TABLE graves (usn integer not null, oid integer not null, type integer not null)')
 
-  // Collect all unique deck names from the words and build the hierarchy
+  // Collect all unique deck names from the words and build the hierarchy.
+  // Use case-insensitive dedup: if "English::Test" and "English::test" both appear,
+  // keep the first one seen to avoid Anki creating duplicate decks with "_" suffix.
+  const seenLower = new Map<string, string>() // lowercase → first-seen casing
   const allDeckNamesSet = new Set<string>()
   const deckNameToAnkiId = new Map<string, number>()
 
   for (const { deckName } of wordsWithDecks) {
     for (const name of allDeckNames(deckName)) {
-      allDeckNamesSet.add(name)
+      const lower = name.toLowerCase()
+      if (!seenLower.has(lower)) {
+        seenLower.set(lower, name)
+        allDeckNamesSet.add(name)
+      }
     }
   }
 
@@ -179,8 +186,10 @@ export async function generateApkg(
     const guid = word.id.slice(0, 10)
 
     // Resolve the Anki deck ID for this word's deck (leaf of the hierarchy)
+    // Use case-insensitive lookup to match the deduped deck name
     const leafName = allDeckNames(deckName).at(-1)!
-    const wordDeckId = deckNameToAnkiId.get(leafName) ?? firstLeafDeckId
+    const normalizedLeaf = seenLower.get(leafName.toLowerCase()) ?? leafName
+    const wordDeckId = deckNameToAnkiId.get(normalizedLeaf) ?? firstLeafDeckId
 
     let csum = 0
     for (let j = 0; j < word.word.length; j++) {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Language } from '../../domain/values/Language'
 import { Word } from '../../domain/entities/Word'
 import { WordStatus } from '../../domain/values/WordStatus'
@@ -9,6 +9,7 @@ import { usePersistedState } from '../hooks/usePersistedState'
 import { DeckSelector } from '../components/DeckSelector'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
 import { getDeckName } from '../hooks/useDeckName'
+import { setNavigationGuard } from '../hooks/useNavigationGuard'
 
 type InputMode = 'single' | 'batch'
 
@@ -26,6 +27,35 @@ export function AddWordPage() {
   const [results, setResults] = useState<Word[]>([])
   const [duplicatesMap, setDuplicatesMap] = useState<Record<string, Word[]>>({})
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null)
+
+  // Set navigation guard when there are results or an active import
+  const shouldBlock = results.length > 0 || isLoading
+  useEffect(() => {
+    if (isLoading) {
+      setNavigationGuard('A batch import is in progress. Leaving will interrupt it. Are you sure?')
+    } else if (results.length > 0) {
+      setNavigationGuard('You have added words on this page. Leaving will clear them. Are you sure?')
+    } else {
+      setNavigationGuard(null)
+    }
+    return () => setNavigationGuard(null)
+  }, [isLoading, results.length])
+  const handleBeforeUnload = useCallback((e: BeforeUnloadEvent) => {
+    if (shouldBlock) {
+      e.preventDefault()
+    }
+  }, [shouldBlock])
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [handleBeforeUnload])
+
+  const handleClearResults = () => {
+    setResults([])
+    setDuplicatesMap({})
+    setError(null)
+  }
 
   const checkDuplicates = async (addedWord: Word) => {
     if (!user) return
@@ -80,7 +110,8 @@ export function AddWordPage() {
     setBatchProgress({ current: 0, total: words.length })
 
     const added: Word[] = []
-    const errors: string[] = []
+    const failedWords: string[] = []
+    const errorMessages: string[] = []
 
     for (let i = 0; i < words.length; i++) {
       setBatchProgress({ current: i + 1, total: words.length })
@@ -90,21 +121,21 @@ export function AddWordPage() {
           { wordRepository, translationService },
         )
         added.push(result)
-        setResults([...added])
+        setResults((prev) => [...prev, result])
         checkDuplicates(result)
       } catch (err) {
-        errors.push(`"${words[i]}": ${err instanceof Error ? err.message : 'failed'}`)
+        failedWords.push(words[i])
+        errorMessages.push(`"${words[i]}": ${err instanceof Error ? err.message : 'failed'}`)
       }
     }
 
     setBatchProgress(null)
     setIsLoading(false)
-    if (errors.length > 0) {
-      setError(`Some words failed:\n${errors.join('\n')}`)
+    if (errorMessages.length > 0) {
+      setError(`Some words failed:\n${errorMessages.join('\n')}`)
     }
-    if (added.length > 0) {
-      setBatchInput('')
-    }
+    // Keep failed words in the input for retry, clear successful ones
+    setBatchInput(failedWords.join(', '))
   }
 
   const handleDelete = async (wordToDelete: Word) => {
@@ -250,7 +281,16 @@ export function AddWordPage() {
 
       {results.length > 0 && (
         <div id="add-word-result" className="add-word-result">
-          <h3>Added ({results.length})</h3>
+          <div className="add-word-result__header">
+            <h3>Added ({results.length})</h3>
+            <button
+              id="clear-results-btn"
+              className="btn btn--small btn--ghost"
+              onClick={handleClearResults}
+            >
+              Clear
+            </button>
+          </div>
           {results.map((w) => (
             <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} defaultExpanded duplicates={duplicatesMap[w.id]} onRefine={handleRefine} onDelete={handleDelete} />
           ))}

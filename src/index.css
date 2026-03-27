@@ -352,12 +352,18 @@ select:focus {
   margin-top: 24px;
 }
 
+.add-word-result__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 .add-word-result h3 {
   font-size: 0.875rem;
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
 }
 
 /* Language Toggle */

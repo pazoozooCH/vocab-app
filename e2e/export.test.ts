@@ -31,7 +31,8 @@ test.describe('Export flow', () => {
     await page.click('#add-word-btn')
     await expect(page.locator('#add-word-result')).toBeVisible()
 
-    // Navigate to export page
+    // Accept navigation guard and go to export page
+    page.on('dialog', (dialog) => dialog.accept())
     await page.click('#nav-export')
 
     // Should show 1 pending word

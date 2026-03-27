@@ -202,7 +202,8 @@ test.describe('Add Word flow', () => {
     await page.click('#add-word-btn')
     await expect(page.locator('#add-word-result')).toBeVisible()
 
-    // Navigate to word list
+    // Accept navigation guard and go to word list
+    page.on('dialog', (dialog) => dialog.accept())
     await page.click('#nav-words')
 
     // Verify the word appears in compact row view
@@ -245,7 +246,8 @@ test.describe('Add Word flow', () => {
     await page.click('#add-word-btn')
     await expect(page.locator('#add-word-result')).toBeVisible()
 
-    // Navigate to word list
+    // Accept navigation guard and go to word list
+    page.on('dialog', (dialog) => dialog.accept())
     await page.click('#nav-words')
 
     // Word should appear as a compact row
@@ -257,10 +259,7 @@ test.describe('Add Word flow', () => {
     const wordCard = page.locator('.word-card').filter({ hasText: 'English::DeleteList' })
     await expect(wordCard).toBeVisible()
 
-    // Accept the confirm dialog
-    page.on('dialog', (dialog) => dialog.accept())
-
-    // Delete from word list
+    // Delete from word list (dialog handler already registered above)
     await wordCard.locator('.btn--danger').click()
 
     // The row should be gone

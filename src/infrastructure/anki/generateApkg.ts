@@ -38,7 +38,7 @@ function uuidToId(uuid: string): number {
 
 export async function generateApkg(words: Word[], deckName: string): Promise<Blob> {
   const SQL = await initSqlJs({
-    locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
+    locateFile: () => '/sql-wasm.wasm',
   })
   const db = new SQL.Database()
 

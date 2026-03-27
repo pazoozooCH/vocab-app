@@ -27,13 +27,14 @@ export class SupabaseDeckRepository implements DeckRepository {
   }
 
   async save(deck: Deck): Promise<void> {
-    const { error } = await this.client.from('decks').insert({
+    const { data, error } = await this.client.from('decks').insert({
       id: deck.id,
       user_id: deck.userId,
       name: deck.name,
       language: deck.language,
-    })
+    }).select()
     if (error) throw error
+    if (!data || data.length === 0) throw new Error('Deck was not created (possibly blocked by RLS)')
   }
 
   async findById(id: string, userId: string): Promise<Deck | null> {

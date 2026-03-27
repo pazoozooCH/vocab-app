@@ -43,7 +43,7 @@ export class SupabaseWordRepository implements WordRepository {
   }
 
   async save(word: Word): Promise<void> {
-    const { error } = await this.client.from('words').insert({
+    const { data, error } = await this.client.from('words').insert({
       id: word.id,
       user_id: word.userId,
       word: word.word,
@@ -55,8 +55,9 @@ export class SupabaseWordRepository implements WordRepository {
       status: word.status,
       created_at: word.createdAt.toISOString(),
       exported_at: word.exportedAt?.toISOString() ?? null,
-    })
+    }).select()
     if (error) throw error
+    if (!data || data.length === 0) throw new Error('Word was not saved (possibly blocked by RLS)')
   }
 
   async findById(id: string, userId: string): Promise<Word | null> {

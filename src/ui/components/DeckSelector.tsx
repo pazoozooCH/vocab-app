@@ -46,7 +46,12 @@ export function DeckSelector({
       name: trimmedName,
       language,
     })
-    await deckRepository.save(deck)
+    try {
+      await deckRepository.save(deck)
+    } catch (err) {
+      setCreateError(`Failed to create deck: ${err instanceof Error ? err.message : String(err)}`)
+      return
+    }
     setNewDeckName('')
     setCreateError(null)
     setIsCreating(false)

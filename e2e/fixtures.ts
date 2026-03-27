@@ -9,6 +9,7 @@ const E2E_USER_ID = '00000000-0000-0000-0000-000000000088'
 export const test = base.extend({
   page: async ({ page }, use) => {
     const client = createClient(SUPABASE_URL, process.env.SUPABASE_SECRET_KEY ?? '')
+    await client.from('api_usage').delete().eq('user_id', E2E_USER_ID)
     await client.from('exports').delete().eq('user_id', E2E_USER_ID)
     await client.from('words').delete().eq('user_id', E2E_USER_ID)
     await client.from('decks').delete().eq('user_id', E2E_USER_ID)

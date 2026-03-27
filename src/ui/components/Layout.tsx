@@ -23,6 +23,9 @@ export function Layout() {
           Vocab{isLocalDev && <span className="top-bar__local-badge">LOCAL</span>}
         </h1>
         <div className="top-bar__right">
+          <NavLink to="/stats" id="nav-stats" className="top-bar__link" onClick={handleNav('/stats')}>
+            Stats
+          </NavLink>
           <BuildInfo />
           <button id="sign-out-btn" className="top-bar__signout" onClick={signOut}>
             Sign out

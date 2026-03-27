@@ -75,6 +75,20 @@ Rules:
 - Use natural, everyday sentences${language === 'FR' ? '\n- French words must always include their article (un/une, le/la)' : ''}
 - Return ONLY the JSON object, no other text`
 
+  // Log API usage to the database
+  const logUsage = async (model: string, success: boolean, errorMessage?: string) => {
+    try {
+      await supabase.from('api_usage').insert({
+        user_id: user.id,
+        model,
+        success,
+        error_message: errorMessage ?? null,
+      })
+    } catch {
+      // Don't fail the request if logging fails
+    }
+  }
+
   // Retry and fallback strategy for Gemini's free tier:
   // 1. Try gemini-2.5-flash (better quality) with 2 attempts
   // 2. If 503 (overloaded) or 429 (rate limit), fall back to gemini-2.5-flash-lite
@@ -104,9 +118,11 @@ Rules:
           !result.sentencesSource?.length ||
           !result.sentencesGerman?.length
         ) {
+          await logUsage(model, false, 'Invalid translation response structure')
           return { status: 500, body: { error: 'Invalid translation response structure' } }
         }
 
+        await logUsage(model, true)
         return { status: 200, body: result }
       } catch (err: unknown) {
         const isRetryable =
@@ -132,11 +148,14 @@ Rules:
 
         // All models exhausted — return a user-friendly error
         if (isRetryable) {
+          await logUsage(model, false, 'Service temporarily busy (503/429)')
           return {
             status: 503,
             body: { error: 'Translation service is temporarily busy. Please try again in a moment.' },
           }
         }
+        const errMsg = err instanceof Error ? err.message : 'Unknown error'
+        await logUsage(model, false, errMsg)
         return { status: 500, body: { error: 'Translation failed' } }
       }
     }

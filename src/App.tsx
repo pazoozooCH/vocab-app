@@ -6,6 +6,7 @@ import { LoginPage } from './ui/pages/LoginPage'
 import { AddWordPage } from './ui/pages/AddWordPage'
 import { WordListPage } from './ui/pages/WordListPage'
 import { ExportPage } from './ui/pages/ExportPage'
+import { StatsPage } from './ui/pages/StatsPage'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
               <Route path="/" element={<AddWordPage />} />
               <Route path="/words" element={<WordListPage />} />
               <Route path="/export" element={<ExportPage />} />
+              <Route path="/stats" element={<StatsPage />} />
             </Route>
           </Route>
         </Routes>

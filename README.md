@@ -61,7 +61,9 @@ This app automates steps 2–5 into a single action.
 | Anki Export | `anki-apkg-export` or custom SQLite-based `.apkg` generator |
 | Dev Tooling | MCP servers (see below)             |
 
-> **Why Gemini over Claude API?** Both produce excellent translations. Gemini was chosen because it offers a free tier (250 requests/day with Gemini 2.5 Flash), which is more than enough for a personal vocab app. The Anthropic API has no free tier and charges per token.
+> **Why Gemini over Claude API?** Both produce excellent translations. Gemini was chosen because it offers a free tier, while the Anthropic API has no free tier and charges per token.
+>
+> **Gemini free tier limits** (as of March 2026): Without billing enabled, the free tier is very restrictive (~20 requests/day per model). To unlock the full free tier (250 req/day for Flash, 1000 req/day for Flash-lite), **enable billing** on your Google Cloud project at [console.cloud.google.com/billing](https://console.cloud.google.com/billing). You won't be charged as long as you stay within free limits — billing just needs to be *attached* to the project. Check your current quota at [console.cloud.google.com](https://console.cloud.google.com/) → APIs & Services → Gemini API → Quotas.
 
 ### MCP Servers
 

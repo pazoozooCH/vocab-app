@@ -319,3 +319,13 @@ Database migrations are **not** auto-deployed. After adding a new migration, pus
 ```bash
 npx supabase db push
 ```
+
+### Database migration safety
+
+**The production database contains real user data. All migrations must be non-destructive.**
+
+- Never `DROP TABLE`, `DROP COLUMN`, or `TRUNCATE` tables with production data
+- Add new columns as nullable or with a default value
+- For renames: add new column → copy data → drop old column (across separate migrations if needed)
+- Test migrations locally with `npm run db:reset` before pushing to production
+- Always review the migration SQL before running `npm run db:push`

@@ -67,6 +67,13 @@ src/
 - Do not bundle unrelated changes in a single commit
 - Keep commits small enough to be reviewable
 
+### Database Migrations
+
+- **The production database contains real user data. Migrations MUST NOT lose data.**
+- All migrations must be backwards-compatible: add columns as nullable or with defaults, never drop columns with data, use multi-step migrations for renames (add new → copy → drop old).
+- Test migrations locally with `npm run db:reset` before pushing to production with `npm run db:push`.
+- Never use `DROP TABLE`, `DROP COLUMN`, or `TRUNCATE` on tables that contain production data without explicit user approval.
+
 ### Deployment
 
 - All deployment is automated — no manual steps

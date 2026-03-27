@@ -21,13 +21,6 @@ function parseDeckFilter(filter: DeckFilter): { deckId?: string; language?: Lang
 
 import { getDeckName } from '../hooks/useDeckName'
 
-function filterLabel(filter: string, decks: import('../../domain/entities/Deck').Deck[]): string {
-  if (!filter) return 'All decks'
-  if (filter === Language.EN) return 'All English decks'
-  if (filter === Language.FR) return 'All French decks'
-  if (filter.startsWith('deck:')) return getDeckName(filter.slice(5), decks) || filter.slice(5)
-  return filter
-}
 
 export function ExportPage() {
   const { user } = useAuth()
@@ -82,8 +75,12 @@ export function ExportPage() {
     if (!user || pendingWords.length === 0) return
     setExporting(true)
     try {
-      // Determine deck name for the .apkg
-      const deckName = filterLabel(deckFilter, decks)
+      // Determine deck name for the .apkg file
+      // If filtering by a specific deck, use that name; otherwise use the first word's deck
+      const firstDeckName = getDeckName(pendingWords[0].deckId, decks) || 'Vocab'
+      const deckName = filterDeckId
+        ? getDeckName(filterDeckId, decks) || firstDeckName
+        : firstDeckName
 
       // Generate and download .apkg
       const blob = await generateApkg(pendingWords, deckName)

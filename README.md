@@ -179,16 +179,25 @@ POST /api/translate   — Receives { word, language }, calls Gemini API, returns
 - **Deck management** — create and delete decks, per language, with Anki hierarchical naming (`English::Verbs`)
 - **Duplicate detection** — warns when adding a word that already exists, shows potential duplicates
 - **Word list** — compact expandable rows, filter by language/deck/status
-- **Export** — mark words as exported (`.apkg` download pending)
+- **Anki export** — generate `.apkg` files with "Basic (and reversed card)" note type, hierarchical decks, bold vocabulary words in HTML. Export history with confirm/fail/delete workflow.
 - **Dark mode** — automatic via `prefers-color-scheme`
 - **PWA** — installable on mobile with custom icon
 - **Responsive** — mobile-first, works on phone and desktop
 - **Persistent UI state** — language, deck, and mode selections saved across sessions
 - **Email whitelist** — only pre-approved emails can access the app, enforced via RLS and API checks
 
+### Anki Compatibility
+
+- Tested with Anki 25.09.2 (3890e12c), Python 3.14.3, Qt 6.10.2
+- Export format: `.apkg` (Anki Deck Package) with `collection.anki2` SQLite database
+- Note type: "Basic (and reversed card)" with `originalStockKind: 1` — merges with the user's existing stock note type on import (no duplicate `+` suffix)
+- Deck hierarchy: `English::Verbs` creates nested decks automatically using `\x1f` separator
+- Cards: each word creates 2 cards (source→German and German→source)
+- Formatting: bold vocabulary words (`<b>`), italic classifiers (`<i>`) in HTML
+- Sample export file for reference: `samples/Export.apkg`
+
 ## Pending Features
 
-- **Anki .apkg export** — generate and download `.apkg` files for import into Anki
 - **Word editing** — modify translations, sentences, or deck assignment after adding
 - **AnkiConnect sync** — direct sync to Anki desktop via AnkiConnect
 - **Offline support** — service worker caching for offline use

@@ -79,3 +79,59 @@ test('delete a deck with words asks for confirmation', async ({ page }) => {
   // Deck and its words should be gone
   await expect(page.locator('#deck-select option:checked')).not.toHaveText('English::WithWords')
 })
+
+test('rename a deck', async ({ page }) => {
+  await page.goto('/')
+  await page.click('#lang-en')
+
+  // Create a deck
+  await page.selectOption('#deck-select', '__new__')
+  await page.locator('#new-deck-input').fill('English::OldName')
+  await page.click('#create-deck-btn')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::OldName')
+
+  // Click edit button
+  await page.click('#edit-deck-btn')
+
+  // Edit input should appear with current name
+  const editInput = page.locator('#edit-deck-input')
+  await expect(editInput).toBeVisible()
+  await expect(editInput).toHaveValue('English::OldName')
+
+  // Change the name and save
+  await editInput.clear()
+  await editInput.fill('English::NewName')
+  await page.click('#save-deck-btn')
+
+  // Edit form should close, dropdown should show new name
+  await expect(editInput).not.toBeVisible()
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::NewName')
+})
+
+test('rename to duplicate name shows error', async ({ page }) => {
+  await page.goto('/')
+  await page.click('#lang-en')
+
+  // Create first deck
+  await page.selectOption('#deck-select', '__new__')
+  await page.locator('#new-deck-input').fill('English::First')
+  await page.click('#create-deck-btn')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::First')
+
+  // Create second deck
+  await page.selectOption('#deck-select', '__new__')
+  await expect(page.locator('#new-deck-input')).toBeVisible()
+  await page.locator('#new-deck-input').fill('English::Second')
+  await page.click('#create-deck-btn')
+  await expect(page.locator('#deck-select option:checked')).toHaveText('English::Second')
+
+  // Try to rename Second to First
+  await page.click('#edit-deck-btn')
+  const editInput = page.locator('#edit-deck-input')
+  await editInput.clear()
+  await editInput.fill('English::First')
+  await page.click('#save-deck-btn')
+
+  // Should show error
+  await expect(page.locator('#deck-edit-error')).toContainText('already exists')
+})

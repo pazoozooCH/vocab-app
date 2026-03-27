@@ -177,6 +177,7 @@ export function AddWordPage() {
           selectedDeckId={deckId}
           onSelect={setDeckId}
           onDeckCreated={reloadDecks}
+          onDeckUpdated={reloadDecks}
           onDeckDeleted={reloadDecks}
           language={language}
         />

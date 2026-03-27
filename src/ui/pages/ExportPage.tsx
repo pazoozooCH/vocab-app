@@ -36,7 +36,7 @@ export function ExportPage() {
     [deckFilter],
   )
 
-  const { words: allPending } = useWords({
+  const { words: allPending, reload: reloadPending } = useWords({
     deckId: filterDeckId || undefined,
     status: WordStatus.Pending,
   })
@@ -113,6 +113,7 @@ export function ExportPage() {
     if (!user) return
     await confirmExport(exp.id, user.id, { exportRepository, wordRepository })
     await loadExports()
+    await reloadPending()
   }
 
   const handleFail = async (exp: ExportEntity) => {

@@ -36,13 +36,14 @@ function stringToId(s: string): number {
   return 1600000000000 + Math.abs(hash) % 100000000
 }
 
-// Collect all deck names in the hierarchy (using \x1f as Anki's internal separator)
-// e.g. "English::Sub::Verbs" → ["English", "English\x1fSub", "English\x1fSub\x1fVerbs"]
+// Collect all deck names in the hierarchy
+// In collection.anki2 JSON format, Anki uses :: as the hierarchy separator
+// e.g. "English::Sub::Verbs" → ["English", "English::Sub", "English::Sub::Verbs"]
 function allDeckNames(name: string): string[] {
   const parts = name.split('::')
   const result: string[] = []
   for (let i = 1; i <= parts.length; i++) {
-    result.push(parts.slice(0, i).join('\x1f'))
+    result.push(parts.slice(0, i).join('::'))
   }
   return result
 }

@@ -191,7 +191,7 @@ POST /api/translate   — Receives { word, language }, calls Gemini API, returns
 - Tested with Anki 25.09.2 (3890e12c), Python 3.14.3, Qt 6.10.2
 - Export format: `.apkg` (Anki Deck Package) with `collection.anki2` SQLite database
 - Note type: "Basic (and reversed card)" with `originalStockKind: 1` — merges with the user's existing stock note type on import (no duplicate `+` suffix)
-- Deck hierarchy: `English::Verbs` creates nested decks automatically using `\x1f` separator
+- Deck hierarchy: `English::Verbs` creates nested decks automatically using `::` separator in the JSON decks format
 - Cards: each word creates 2 cards (source→German and German→source)
 - Formatting: bold vocabulary words (`<b>`), italic classifiers (`<i>`) in HTML
 - Sample export file for reference: `samples/Export.apkg`

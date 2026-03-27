@@ -73,7 +73,7 @@ describe('generateApkg', () => {
     const deckNames = Object.values(decksJson).map((d: unknown) => (d as { name: string }).name)
     expect(deckNames).toContain('Default')
     expect(deckNames.some((n: string) => n === 'English')).toBe(true)
-    expect(deckNames.some((n: string) => n === 'English\x1fTest')).toBe(true)
+    expect(deckNames.some((n: string) => n === 'English::Test')).toBe(true)
 
     // Check model has originalStockKind to merge with existing note type
     const modelsJson = JSON.parse(col[0].values[0][9] as string)
@@ -155,7 +155,7 @@ describe('generateApkg', () => {
     expect(deckList.length).toBeGreaterThanOrEqual(4) // Default + 3 hierarchy levels
 
     // Find the leaf deck
-    const leafDeck = deckList.find((d) => d.name === 'English\x1fSub\x1fDeep')
+    const leafDeck = deckList.find((d) => d.name === 'English::Sub::Deep')
     expect(leafDeck).toBeDefined()
 
     // Cards should be assigned to the leaf deck
@@ -179,8 +179,8 @@ describe('generateApkg', () => {
     const decksJson = JSON.parse(db.exec('SELECT decks FROM col')[0].values[0][0] as string)
     const deckList = Object.values(decksJson) as Array<{ id: number; name: string }>
 
-    const testDeck = deckList.find((d) => d.name === 'English\x1fTest')
-    const subDeck = deckList.find((d) => d.name === 'English\x1fTest\x1fSub')
+    const testDeck = deckList.find((d) => d.name === 'English::Test')
+    const subDeck = deckList.find((d) => d.name === 'English::Test::Sub')
     expect(testDeck).toBeDefined()
     expect(subDeck).toBeDefined()
 

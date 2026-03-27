@@ -114,6 +114,10 @@ export function AddWordPage() {
     const errorMessages: string[] = []
 
     for (let i = 0; i < words.length; i++) {
+      // Pause between requests to avoid hitting Gemini rate limits
+      if (i > 0) {
+        await new Promise((r) => setTimeout(r, 1500))
+      }
       setBatchProgress({ current: i + 1, total: words.length })
       try {
         const result = await addWord(

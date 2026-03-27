@@ -77,17 +77,23 @@ export function ExportPage() {
     try {
       // Determine deck name for the .apkg file
       // If filtering by a specific deck, use that name; otherwise use the first word's deck
-      const firstDeckName = getDeckName(pendingWords[0].deckId, decks) || 'Vocab'
-      const deckName = filterDeckId
-        ? getDeckName(filterDeckId, decks) || firstDeckName
-        : firstDeckName
+      // Build words with their deck names for the .apkg generator
+      const wordsWithDecks = pendingWords.map((w) => ({
+        word: w,
+        deckName: getDeckName(w.deckId, decks) || 'Vocab',
+      }))
+
+      // File name from filter or first deck
+      const exportFileName = filterDeckId
+        ? getDeckName(filterDeckId, decks) || 'Vocab'
+        : wordsWithDecks[0].deckName
 
       // Generate and download .apkg
-      const blob = await generateApkg(pendingWords, deckName, '/sql-wasm.wasm')
+      const blob = await generateApkg(wordsWithDecks, '/sql-wasm.wasm')
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${deckName.replace(/::/g, '_')}.apkg`
+      a.download = `${exportFileName.replace(/::/g, '_')}.apkg`
       a.click()
       URL.revokeObjectURL(url)
 

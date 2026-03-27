@@ -8,7 +8,7 @@ import initSqlJs from 'sql.js'
 
 const wasmPath = resolve(__dirname, '../../../node_modules/sql.js/dist/sql-wasm.wasm')
 
-function makeWord(overrides: Partial<{ word: string; id: string }> = {}): Word {
+function makeWord(overrides: Partial<{ word: string; id: string; deckId: string }> = {}): Word {
   return Word.create({
     id: overrides.id ?? 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     userId: 'user-1',
@@ -17,7 +17,7 @@ function makeWord(overrides: Partial<{ word: string; id: string }> = {}): Word {
     translations: ['hallo', 'grüß Gott _[Aust]_'],
     sentencesSource: ['1. **Hello**, how are you?', '2. She said **hello**.'],
     sentencesGerman: ['1. **Hallo**, wie geht es dir?', '2. Sie sagte **hallo**.'],
-    deckId: 'deck-1',
+    deckId: overrides.deckId ?? 'deck-1',
     status: WordStatus.Pending,
     createdAt: new Date('2026-03-25'),
     exportedAt: null,
@@ -28,15 +28,13 @@ async function extractDb(blob: Blob) {
   const buffer = await blob.arrayBuffer()
   const bytes = new Uint8Array(buffer)
 
-  // Find the SQLite header (starts with "SQLite format 3\0")
-  // The ZIP contains collection.anki2 — parse the ZIP to extract it
   const SQL = await initSqlJs({ locateFile: () => wasmPath })
 
-  // Simple ZIP extraction: find the local file header for collection.anki2
+  // Simple ZIP extraction: find collection.anki2
   let offset = 0
   while (offset < bytes.length) {
     const sig = bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)
-    if (sig !== 0x04034b50) break // not a local file header
+    if (sig !== 0x04034b50) break
 
     const view = new DataView(buffer, offset)
     const compSize = view.getUint32(18, true)
@@ -57,8 +55,8 @@ async function extractDb(blob: Blob) {
 
 describe('generateApkg', () => {
   it('generates a valid apkg with correct structure', async () => {
-    const words = [makeWord()]
-    const blob = await generateApkg(words, 'English::Test', wasmPath)
+    const wordsWithDecks = [{ word: makeWord(), deckName: 'English::Test' }]
+    const blob = await generateApkg(wordsWithDecks, wasmPath)
 
     expect(blob.type).toBe('application/zip')
     expect(blob.size).toBeGreaterThan(0)
@@ -74,9 +72,8 @@ describe('generateApkg', () => {
     const decksJson = JSON.parse(col[0].values[0][10] as string)
     const deckNames = Object.values(decksJson).map((d: unknown) => (d as { name: string }).name)
     expect(deckNames).toContain('Default')
-    // Hierarchical decks use \x1f separator
-    expect(deckNames.some((n: string) => n.includes('English'))).toBe(true)
-    expect(deckNames.some((n: string) => n.includes('Test'))).toBe(true)
+    expect(deckNames.some((n: string) => n === 'English')).toBe(true)
+    expect(deckNames.some((n: string) => n === 'English\x1fTest')).toBe(true)
 
     // Check model has originalStockKind to merge with existing note type
     const modelsJson = JSON.parse(col[0].values[0][9] as string)
@@ -89,8 +86,8 @@ describe('generateApkg', () => {
   })
 
   it('creates correct notes with HTML formatting', async () => {
-    const words = [makeWord({ word: 'hello' })]
-    const blob = await generateApkg(words, 'English::Test', wasmPath)
+    const wordsWithDecks = [{ word: makeWord({ word: 'hello' }), deckName: 'English::Test' }]
+    const blob = await generateApkg(wordsWithDecks, wasmPath)
     const db = await extractDb(blob)
 
     const notes = db.exec('SELECT flds, sfld FROM notes')
@@ -115,8 +112,8 @@ describe('generateApkg', () => {
   })
 
   it('creates 2 cards per note (forward and reversed)', async () => {
-    const words = [makeWord()]
-    const blob = await generateApkg(words, 'English::Test', wasmPath)
+    const wordsWithDecks = [{ word: makeWord(), deckName: 'English::Test' }]
+    const blob = await generateApkg(wordsWithDecks, wasmPath)
     const db = await extractDb(blob)
 
     const cards = db.exec('SELECT nid, ord FROM cards')
@@ -131,11 +128,11 @@ describe('generateApkg', () => {
   })
 
   it('creates multiple notes for multiple words', async () => {
-    const words = [
-      makeWord({ id: 'id-1', word: 'hello' }),
-      makeWord({ id: 'id-2', word: 'goodbye' }),
+    const wordsWithDecks = [
+      { word: makeWord({ id: 'id-1', word: 'hello' }), deckName: 'English::Test' },
+      { word: makeWord({ id: 'id-2', word: 'goodbye' }), deckName: 'English::Test' },
     ]
-    const blob = await generateApkg(words, 'English::Test', wasmPath)
+    const blob = await generateApkg(wordsWithDecks, wasmPath)
     const db = await extractDb(blob)
 
     const notes = db.exec('SELECT COUNT(*) FROM notes')
@@ -147,9 +144,9 @@ describe('generateApkg', () => {
     db.close()
   })
 
-  it('assigns cards to the correct leaf deck', async () => {
-    const words = [makeWord()]
-    const blob = await generateApkg(words, 'English::Sub::Deep', wasmPath)
+  it('assigns cards to the correct leaf deck in hierarchy', async () => {
+    const wordsWithDecks = [{ word: makeWord(), deckName: 'English::Sub::Deep' }]
+    const blob = await generateApkg(wordsWithDecks, wasmPath)
     const db = await extractDb(blob)
 
     // Should have created deck hierarchy: Default, English, English\x1fSub, English\x1fSub\x1fDeep
@@ -166,6 +163,35 @@ describe('generateApkg', () => {
     for (const row of cards[0].values) {
       expect(row[0]).toBe(leafDeck!.id)
     }
+
+    db.close()
+  })
+
+  it('assigns words from different decks to their respective Anki decks', async () => {
+    const wordsWithDecks = [
+      { word: makeWord({ id: 'id-1', word: 'hello' }), deckName: 'English::Test' },
+      { word: makeWord({ id: 'id-2', word: 'bonjour' }), deckName: 'English::Test::Sub' },
+    ]
+    const blob = await generateApkg(wordsWithDecks, wasmPath)
+    const db = await extractDb(blob)
+
+    // Should have both deck hierarchies
+    const decksJson = JSON.parse(db.exec('SELECT decks FROM col')[0].values[0][0] as string)
+    const deckList = Object.values(decksJson) as Array<{ id: number; name: string }>
+
+    const testDeck = deckList.find((d) => d.name === 'English\x1fTest')
+    const subDeck = deckList.find((d) => d.name === 'English\x1fTest\x1fSub')
+    expect(testDeck).toBeDefined()
+    expect(subDeck).toBeDefined()
+
+    // Each word's cards should go to their respective decks
+    const cards = db.exec('SELECT nid, did FROM cards ORDER BY nid')
+    // First word (hello) → English::Test
+    expect(cards[0].values[0][1]).toBe(testDeck!.id)
+    expect(cards[0].values[1][1]).toBe(testDeck!.id)
+    // Second word (bonjour) → English::Test::Sub
+    expect(cards[0].values[2][1]).toBe(subDeck!.id)
+    expect(cards[0].values[3][1]).toBe(subDeck!.id)
 
     db.close()
   })

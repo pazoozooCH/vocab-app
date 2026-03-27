@@ -36,8 +36,8 @@ function stringToId(s: string): number {
   return 1600000000000 + Math.abs(hash) % 100000000
 }
 
-// Collect all parent deck names for hierarchical decks
-// e.g. "English::Sub::Verbs" needs "English" and "English\x1fSub" to exist
+// Collect all deck names in the hierarchy (using \x1f as Anki's internal separator)
+// e.g. "English::Sub::Verbs" → ["English", "English\x1fSub", "English\x1fSub\x1fVerbs"]
 function allDeckNames(name: string): string[] {
   const parts = name.split('::')
   const result: string[] = []
@@ -47,18 +47,24 @@ function allDeckNames(name: string): string[] {
   return result
 }
 
-export async function generateApkg(words: Word[], deckName: string, wasmUrl?: string): Promise<Blob> {
+interface WordWithDeck {
+  word: Word
+  deckName: string
+}
+
+export async function generateApkg(
+  wordsWithDecks: WordWithDeck[],
+  wasmUrl?: string,
+): Promise<Blob> {
   const SQL = await initSqlJs(
     wasmUrl !== undefined ? { locateFile: () => wasmUrl } : undefined,
   )
   const db = new SQL.Database()
 
-  // Use a fixed model ID for "Basic (and reversed card)"
-  // This must be unique but consistent so re-imports update rather than duplicate
   const modelId = 1607392319100
   const now = Math.floor(Date.now() / 1000)
 
-  // Create schema matching Anki 2.1 collection.anki2 format
+  // Create schema
   db.run(`CREATE TABLE col (
     id integer primary key, crt integer not null, mod integer not null,
     scm integer not null, ver integer not null, dty integer not null,
@@ -86,8 +92,16 @@ export async function generateApkg(words: Word[], deckName: string, wasmUrl?: st
   )`)
   db.run('CREATE TABLE graves (usn integer not null, oid integer not null, type integer not null)')
 
-  // Build deck hierarchy — create all parent and leaf decks
-  const deckNames = allDeckNames(deckName)
+  // Collect all unique deck names from the words and build the hierarchy
+  const allDeckNamesSet = new Set<string>()
+  const deckNameToAnkiId = new Map<string, number>()
+
+  for (const { deckName } of wordsWithDecks) {
+    for (const name of allDeckNames(deckName)) {
+      allDeckNamesSet.add(name)
+    }
+  }
+
   const deckEntries: Record<string, unknown> = {
     '1': {
       id: 1, name: 'Default', mod: now, usn: -1,
@@ -96,20 +110,21 @@ export async function generateApkg(words: Word[], deckName: string, wasmUrl?: st
       extendNew: 0, extendRev: 0,
     },
   }
-  let leafDeckId = 1
-  for (const name of deckNames) {
+
+  let firstLeafDeckId = 1
+  for (const name of allDeckNamesSet) {
     const id = stringToId(name)
+    deckNameToAnkiId.set(name, id)
     deckEntries[String(id)] = {
       id, name, mod: now, usn: -1,
       lrnToday: [0, 0], revToday: [0, 0], newToday: [0, 0], timeToday: [0, 0],
       collapsed: false, browserCollapsed: false, desc: '', dyn: 0, conf: 1,
       extendNew: 10, extendRev: 50,
     }
-    leafDeckId = id
+    if (firstLeafDeckId === 1) firstLeafDeckId = id
   }
 
-  // "Basic (and reversed card)" model with originalStockKind so Anki
-  // merges with the user's existing stock note type instead of creating a duplicate
+  // Model
   const models = {
     [String(modelId)]: {
       id: modelId, name: 'Basic (and reversed card)', type: 0,
@@ -133,7 +148,7 @@ export async function generateApkg(words: Word[], deckName: string, wasmUrl?: st
   }
 
   const conf = {
-    nextPos: 1, estTimes: true, activeDecks: [1], curDeck: leafDeckId,
+    nextPos: 1, estTimes: true, activeDecks: [1], curDeck: firstLeafDeckId,
     newSpread: 0, collapseTime: 1200, timeLim: 0, addToCur: true,
     curModel: String(modelId), dueCounts: true, sortType: 'noteFld', sortBackwards: false,
   }
@@ -154,23 +169,23 @@ export async function generateApkg(words: Word[], deckName: string, wasmUrl?: st
     JSON.stringify(deckEntries), JSON.stringify(dconf), '{}',
   ])
 
-  // Add notes and cards
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i]
+  // Add notes and cards — each word goes to its own deck
+  for (let i = 0; i < wordsWithDecks.length; i++) {
+    const { word, deckName } = wordsWithDecks[i]
     const noteId = now * 1000 + i
     const front = formatFront(word)
     const back = formatBack(word)
     const guid = word.id.slice(0, 10)
+
+    // Resolve the Anki deck ID for this word's deck (leaf of the hierarchy)
+    const leafName = allDeckNames(deckName).at(-1)!
+    const wordDeckId = deckNameToAnkiId.get(leafName) ?? firstLeafDeckId
 
     let csum = 0
     for (let j = 0; j < word.word.length; j++) {
       csum = ((csum << 5) - csum + word.word.charCodeAt(j)) | 0
     }
     csum = Math.abs(csum)
-
-    // Determine which deck this word belongs to — use the leaf deck
-    // In the future, words could go to different decks based on their deckId
-    const wordDeckId = leafDeckId
 
     db.run('INSERT INTO notes VALUES(?,?,?,?,?,?,?,?,?,?,?)', [
       noteId, guid, modelId, now, -1, '',

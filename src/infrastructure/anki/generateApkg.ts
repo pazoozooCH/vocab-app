@@ -47,10 +47,10 @@ function allDeckNames(name: string): string[] {
   return result
 }
 
-export async function generateApkg(words: Word[], deckName: string): Promise<Blob> {
-  const SQL = await initSqlJs({
-    locateFile: () => '/sql-wasm.wasm',
-  })
+export async function generateApkg(words: Word[], deckName: string, wasmUrl?: string): Promise<Blob> {
+  const SQL = await initSqlJs(
+    wasmUrl !== undefined ? { locateFile: () => wasmUrl } : undefined,
+  )
   const db = new SQL.Database()
 
   // Use a fixed model ID for "Basic (and reversed card)"

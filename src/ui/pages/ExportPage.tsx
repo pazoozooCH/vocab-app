@@ -83,7 +83,7 @@ export function ExportPage() {
         : firstDeckName
 
       // Generate and download .apkg
-      const blob = await generateApkg(pendingWords, deckName)
+      const blob = await generateApkg(pendingWords, deckName, '/sql-wasm.wasm')
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

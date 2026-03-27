@@ -1,9 +1,14 @@
 declare module 'sql.js' {
   interface SqlJsStatic {
-    Database: new () => Database
+    Database: new (data?: ArrayLike<number>) => Database
+  }
+  interface QueryExecResult {
+    columns: string[]
+    values: unknown[][]
   }
   interface Database {
     run(sql: string, params?: unknown[]): void
+    exec(sql: string): QueryExecResult[]
     export(): ArrayBuffer
     close(): void
   }

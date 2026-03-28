@@ -255,6 +255,18 @@ Both local development and integration tests share the same local Supabase insta
 
 All three use different user IDs, so they never interfere with each other. `npx supabase start` must be running for both integration and e2e tests.
 
+### Test Data
+
+To load 100 sample words across 4 decks (English::Vocabulary, English::Idioms, French::Vocabulaire, French::Expressions) into the local database:
+
+1. Sign in to the local app first (Google OAuth) to create your auth user
+2. Run:
+```bash
+docker exec -i supabase_db_vocab-app psql -U postgres -d postgres < supabase/testdata.sql
+```
+
+The script auto-detects your user from `auth.users` and creates decks + words with a mix of pending/exported statuses. Run `npm run db:reset` first if you want a clean slate.
+
 ### Commands
 
 ```bash

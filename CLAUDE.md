@@ -76,10 +76,13 @@ src/
 
 ### Database Migrations
 
-- **The production database contains real user data. Migrations MUST NOT lose data.**
+- **Both production and local databases contain real data. Migrations MUST NOT lose data.**
 - All migrations must be backwards-compatible: add columns as nullable or with defaults, never drop columns with data, use multi-step migrations for renames (add new → copy → drop old).
-- Test migrations locally with `npm run db:reset` before pushing to production with `npm run db:push`.
-- Never use `DROP TABLE`, `DROP COLUMN`, or `TRUNCATE` on tables that contain production data without explicit user approval.
+- Never use `DROP TABLE`, `DROP COLUMN`, or `TRUNCATE` on tables that contain data without explicit user approval.
+- **Apply migrations locally**: use `npm run db:restart` (stop + start). This preserves local data in Docker volumes and applies any new migrations. Do NOT use `supabase stop --no-backup` or `npm run db:reset` — these wipe all local data.
+- `npm run db:reset` is only for starting from scratch (e.g. after a fresh clone). It destroys all local data.
+- **Apply migrations to production**: use `npm run db:push` after testing locally.
+- The local migration run serves as a test for the production deployment.
 
 ### Deployment
 

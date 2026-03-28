@@ -34,15 +34,11 @@ export function ExportPage() {
     [deckFilter],
   )
 
-  const { words: allPending, reload: reloadPending } = useWords({
+  const { total: pendingTotal, reload: reloadPending } = useWords({
     deckId: filterDeckId || undefined,
+    language: filterLanguage || undefined,
     status: WordStatus.Pending,
   })
-
-  const pendingWords = useMemo(() => {
-    if (!filterLanguage) return allPending
-    return allPending.filter((w) => w.language === filterLanguage)
-  }, [allPending, filterLanguage])
 
   const enDecks = useMemo(() => decks.filter((d) => d.language === Language.EN), [decks])
   const frDecks = useMemo(() => decks.filter((d) => d.language === Language.FR), [decks])
@@ -75,9 +71,19 @@ export function ExportPage() {
   }
 
   const handleExport = async () => {
-    if (!user || pendingWords.length === 0) return
+    if (!user || pendingTotal === 0) return
     setExporting(true)
     try {
+      // Load ALL pending words for export (not just the visible page)
+      const allPending = await wordRepository.findPaginated(user.id, {
+        deckId: filterDeckId || undefined,
+        language: filterLanguage || undefined,
+        status: WordStatus.Pending,
+        offset: 0,
+        limit: 10000,
+      })
+      const pendingWords = allPending.words
+
       // Build words with their deck names for the .apkg generator
       const wordsWithDecks = pendingWords.map((w) => ({
         word: w,
@@ -158,17 +164,17 @@ export function ExportPage() {
       </select>
 
       <div id="export-summary" className="export-summary">
-        <strong>{pendingWords.length} pending word{pendingWords.length !== 1 ? 's' : ''}</strong>
+        <strong>{pendingTotal} pending word{pendingTotal !== 1 ? 's' : ''}</strong>
       </div>
 
-      {pendingWords.length > 0 && (
+      {pendingTotal > 0 && (
         <button
           id="export-btn"
           className="btn btn--primary"
           onClick={handleExport}
           disabled={exporting}
         >
-          {exporting ? 'Generating…' : `Export ${pendingWords.length} words as .apkg`}
+          {exporting ? 'Generating…' : `Export ${pendingTotal} words as .apkg`}
         </button>
       )}
 

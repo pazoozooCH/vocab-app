@@ -26,47 +26,42 @@ export function WordListPage() {
   const { decks } = useDecks()
   const [deckFilter, setDeckFilter] = usePersistedState<DeckFilter>('wordList.deck', '')
   const [status, setStatus] = useState<WordStatus | ''>('')
+  const [search, setSearch] = useState('')
+  const [searchSentences, setSearchSentences] = useState(false)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
 
   const { deckId: filterDeckId, language: filterLanguage } = useMemo(
     () => parseDeckFilter(deckFilter),
     [deckFilter],
   )
 
-  const { words: allWords, loading, reload } = useWords({
+  const { words, total, loading, hasMore, loadingMore, loadMore, reload } = useWords({
     deckId: filterDeckId || undefined,
+    language: filterLanguage || undefined,
     status: (status as WordStatus) || undefined,
+    search: debouncedSearch || undefined,
+    searchSentences,
   })
-
-  // Client-side language filter when "all EN" or "all FR" is selected
-  const words = useMemo(() => {
-    if (!filterLanguage) return allWords
-    return allWords.filter((w) => w.language === filterLanguage)
-  }, [allWords, filterLanguage])
 
   const enDecks = useMemo(() => decks.filter((d) => d.language === Language.EN), [decks])
   const frDecks = useMemo(() => decks.filter((d) => d.language === Language.FR), [decks])
 
-  const PAGE_SIZE = 30
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  // Reset visible count when filters change
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset pagination on filter change
-    setVisibleCount(PAGE_SIZE)
-  }, [deckFilter, status])
-
-  const visibleWords = useMemo(() => words.slice(0, visibleCount), [words, visibleCount])
-  const hasMore = visibleCount < words.length
-
-  // Infinite scroll: observe sentinel element
+  // Infinite scroll: observe sentinel element to load more
   const observerCallback = useCallback(
     (entries: IntersectionObserverEntry[]) => {
-      if (entries[0].isIntersecting && hasMore) {
-        setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, words.length))
+      if (entries[0].isIntersecting && hasMore && !loadingMore) {
+        loadMore()
       }
     },
-    [hasMore, words.length],
+    [hasMore, loadingMore, loadMore],
   )
 
   useEffect(() => {
@@ -135,21 +130,44 @@ export function WordListPage() {
             Exported
           </button>
         </div>
+
+        <div className="search-filter">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search words…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <label className="search-filter__sentences">
+            <input
+              type="checkbox"
+              checked={searchSentences}
+              onChange={(e) => setSearchSentences(e.target.checked)}
+            />
+            Include sentences
+          </label>
+        </div>
       </div>
 
       {loading ? (
         <div className="loading-text">Loading…</div>
       ) : words.length === 0 ? (
-        <div id="empty-state" className="empty-state">No words found.</div>
+        <div id="empty-state" className="empty-state">
+          {debouncedSearch ? 'No matching words found.' : 'No words found.'}
+        </div>
       ) : (
         <div id="word-list" className="word-list">
-          <div className="word-list__count">{words.length} word{words.length !== 1 ? 's' : ''}</div>
-          {visibleWords.map((w) => (
+          <div className="word-list__count">
+            {total} word{total !== 1 ? 's' : ''}
+            {debouncedSearch && ` matching "${debouncedSearch}"`}
+          </div>
+          {words.map((w) => (
             <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} onDelete={handleDelete} />
           ))}
           {hasMore && (
             <div ref={sentinelRef} className="word-list__loading">
-              Loading more…
+              {loadingMore ? 'Loading more…' : ''}
             </div>
           )}
         </div>

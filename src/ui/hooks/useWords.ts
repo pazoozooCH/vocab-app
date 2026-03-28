@@ -1,13 +1,17 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { Word } from '../../domain/entities/Word'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import type { WordStatus } from '../../domain/values/WordStatus'
-import { WordStatus as WordStatusEnum } from '../../domain/values/WordStatus'
+import type { Language } from '../../domain/values/Language'
 import { useAuth, useServices } from '../context/AppContext'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
+
+const PAGE_SIZE = 30
 
 interface UseWordsOptions {
   deckId?: string
+  language?: Language
   status?: WordStatus
+  search?: string
+  searchSentences?: boolean
 }
 
 export function useWords(options: UseWordsOptions = {}) {
@@ -15,30 +19,58 @@ export function useWords(options: UseWordsOptions = {}) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
-  const queryKey = ['words', user?.id, options.deckId ?? 'all', options.status ?? 'all']
+  const queryKey = [
+    'words',
+    user?.id,
+    options.deckId ?? 'all',
+    options.language ?? 'all',
+    options.status ?? 'all',
+    options.search ?? '',
+    options.searchSentences ?? false,
+  ]
 
-  const { data: words = [], isLoading: loading } = useQuery<Word[]>({
+  const {
+    data,
+    isLoading: loading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey,
-    queryFn: async () => {
-      let result: Word[]
-      if (options.deckId && options.status === WordStatusEnum.Pending) {
-        result = await wordRepository.findPendingByDeckId(options.deckId, user!.id)
-      } else if (options.deckId) {
-        result = await wordRepository.findByDeckId(options.deckId, user!.id)
-      } else {
-        result = await wordRepository.findAllByUser(user!.id)
-      }
-      if (options.status && !(options.deckId && options.status === WordStatusEnum.Pending)) {
-        result = result.filter((w) => w.status === options.status)
-      }
-      return result
-    },
+    queryFn: ({ pageParam = 0 }) =>
+      wordRepository.findPaginated(user!.id, {
+        deckId: options.deckId,
+        language: options.language,
+        status: options.status,
+        search: options.search || undefined,
+        searchSentences: options.searchSentences,
+        offset: pageParam,
+        limit: PAGE_SIZE,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.hasMore ? lastPageParam + PAGE_SIZE : undefined,
     enabled: !!user,
   })
+
+  const words = useMemo(
+    () => data?.pages.flatMap((p) => p.words) ?? [],
+    [data],
+  )
+
+  const total = data?.pages[0]?.total ?? 0
 
   const reload = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['words'] })
   }, [queryClient])
 
-  return { words, loading, reload }
+  return {
+    words,
+    total,
+    loading,
+    hasMore: hasNextPage ?? false,
+    loadingMore: isFetchingNextPage,
+    loadMore: fetchNextPage,
+    reload,
+  }
 }

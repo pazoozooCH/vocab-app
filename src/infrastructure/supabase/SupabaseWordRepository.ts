@@ -3,7 +3,7 @@ import { Word } from '../../domain/entities/Word'
 import type { Language } from '../../domain/values/Language'
 import type { WordStatus } from '../../domain/values/WordStatus'
 import { WordStatus as WordStatusEnum } from '../../domain/values/WordStatus'
-import type { WordRepository } from '../../application/ports/WordRepository'
+import type { WordRepository, WordSearchParams, WordPage } from '../../application/ports/WordRepository'
 
 interface WordRow {
   id: string
@@ -103,6 +103,63 @@ export class SupabaseWordRepository implements WordRepository {
       .order('created_at', { ascending: true })
     if (error) throw error
     return data.map(toDomain)
+  }
+
+  async findPaginated(userId: string, params: WordSearchParams): Promise<WordPage> {
+    // For search that includes sentences, we need client-side filtering
+    // because PostgREST can't easily search within text[] arrays
+    if (params.search && params.searchSentences) {
+      return this.findPaginatedWithFullSearch(userId, params)
+    }
+
+    let query = this.client
+      .from('words')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId)
+
+    if (params.deckId) query = query.eq('deck_id', params.deckId)
+    if (params.language) query = query.eq('language', params.language)
+    if (params.status) query = query.eq('status', params.status)
+    if (params.search) {
+      // Search word and translations (word is text, translations checked via ilike)
+      query = query.ilike('word', `%${params.search}%`)
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(params.offset, params.offset + params.limit - 1)
+
+    if (error) throw error
+    const words = (data ?? []).map(toDomain)
+    const total = count ?? 0
+    return { words, total, hasMore: params.offset + params.limit < total }
+  }
+
+  // Full-text search including sentences: fetch all matching words, filter client-side, paginate
+  private async findPaginatedWithFullSearch(userId: string, params: WordSearchParams): Promise<WordPage> {
+    let query = this.client
+      .from('words')
+      .select('*')
+      .eq('user_id', userId)
+
+    if (params.deckId) query = query.eq('deck_id', params.deckId)
+    if (params.language) query = query.eq('language', params.language)
+    if (params.status) query = query.eq('status', params.status)
+
+    const { data, error } = await query.order('created_at', { ascending: false })
+    if (error) throw error
+
+    const term = (params.search ?? '').toLowerCase()
+    const filtered = (data ?? []).map(toDomain).filter((w) =>
+      w.word.toLowerCase().includes(term) ||
+      w.translations.some((t) => t.toLowerCase().includes(term)) ||
+      w.sentencesSource.some((s) => s.toLowerCase().includes(term)) ||
+      w.sentencesGerman.some((s) => s.toLowerCase().includes(term))
+    )
+
+    const total = filtered.length
+    const words = filtered.slice(params.offset, params.offset + params.limit)
+    return { words, total, hasMore: params.offset + params.limit < total }
   }
 
   async findDuplicates(word: string, language: Language, userId: string, excludeId?: string): Promise<Word[]> {

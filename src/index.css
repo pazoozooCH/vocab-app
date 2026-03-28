@@ -653,6 +653,32 @@ select:focus {
   gap: 12px;
 }
 
+.search-filter {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-filter input[type='text'] {
+  flex: 1;
+  min-width: 120px;
+}
+
+.search-filter__sentences {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.search-filter__sentences input[type='checkbox'] {
+  width: auto;
+  min-height: auto;
+}
+
 .word-list__count {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
@@ -863,6 +889,7 @@ select:focus {
 
   .word-list-filters {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
   }
 

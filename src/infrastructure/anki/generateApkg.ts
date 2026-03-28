@@ -132,10 +132,12 @@ export async function generateApkg(
     if (firstLeafDeckId === 1) firstLeafDeckId = id
   }
 
-  // Model
+  // Custom note type with VocabID field for correlation with the Vocab app.
+  // Uses a fixed model ID so re-imports update the same note type.
+  // No originalStockKind — this is our own note type, separate from stock.
   const models = {
     [String(modelId)]: {
-      id: modelId, name: 'Basic (and reversed card)', type: 0,
+      id: modelId, name: 'Vocab (reversed)', type: 0,
       mod: now, usn: -1, sortf: 0, did: null,
       tmpls: [
         { name: 'Card 1', ord: 0, qfmt: '{{Front}}', afmt: '{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}', bqfmt: '', bafmt: '', did: null, bfont: '', bsize: 0 },
@@ -144,13 +146,13 @@ export async function generateApkg(
       flds: [
         { name: 'Front', ord: 0, sticky: false, rtl: false, font: 'Arial', size: 20, description: '', plainText: false, collapsed: false, excludeFromSearch: false, tag: null, preventDeletion: false },
         { name: 'Back', ord: 1, sticky: false, rtl: false, font: 'Arial', size: 20, description: '', plainText: false, collapsed: false, excludeFromSearch: false, tag: null, preventDeletion: false },
+        { name: 'VocabID', ord: 2, sticky: false, rtl: false, font: 'Arial', size: 20, description: 'Vocab app word ID for sync/correlation', plainText: true, collapsed: true, excludeFromSearch: false, tag: null, preventDeletion: true },
       ],
       css: '.card {\n    font-family: arial;\n    font-size: 20px;\n    line-height: 1.5;\n    text-align: center;\n    color: black;\n    background-color: white;\n}\n',
       latexPre: '\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n',
       latexPost: '\\end{document}',
       latexsvg: false,
       req: [[0, 'any', [0]], [1, 'any', [1]]],
-      originalStockKind: 1,
       vers: [], tags: [],
     },
   }
@@ -199,7 +201,7 @@ export async function generateApkg(
 
     db.run('INSERT INTO notes VALUES(?,?,?,?,?,?,?,?,?,?,?)', [
       noteId, guid, modelId, now, -1, '',
-      `${front}\x1f${back}`, word.word, csum, 0, '',
+      `${front}\x1f${back}\x1f${word.id}`, word.word, csum, 0, '',
     ])
 
     db.run('INSERT INTO cards VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [

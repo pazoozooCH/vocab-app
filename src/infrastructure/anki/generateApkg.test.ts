@@ -75,12 +75,13 @@ describe('generateApkg', () => {
     expect(deckNames.some((n: string) => n === 'English')).toBe(true)
     expect(deckNames.some((n: string) => n === 'English::Test')).toBe(true)
 
-    // Check model has originalStockKind to merge with existing note type
+    // Check model is our custom note type with VocabID field
     const modelsJson = JSON.parse(col[0].values[0][9] as string)
-    const model = Object.values(modelsJson)[0] as { name: string; originalStockKind: number; tmpls: unknown[] }
-    expect(model.name).toBe('Basic (and reversed card)')
-    expect(model.originalStockKind).toBe(1)
+    const model = Object.values(modelsJson)[0] as { name: string; flds: Array<{ name: string }>; tmpls: unknown[] }
+    expect(model.name).toBe('Vocab (reversed)')
     expect(model.tmpls).toHaveLength(2)
+    expect(model.flds).toHaveLength(3)
+    expect(model.flds[2].name).toBe('VocabID')
 
     db.close()
   })
@@ -94,7 +95,11 @@ describe('generateApkg', () => {
     expect(notes[0].values).toHaveLength(1)
 
     const flds = notes[0].values[0][0] as string
-    const [front, back] = flds.split('\x1f')
+    const parts = flds.split('\x1f')
+    const [front, back, vocabId] = parts
+
+    // Should have 3 fields: Front, Back, VocabID
+    expect(parts).toHaveLength(3)
 
     // Front should contain the word and source sentences with HTML bold
     expect(front).toContain('<b>hello</b>')
@@ -104,6 +109,9 @@ describe('generateApkg', () => {
     expect(back).toContain('hallo')
     expect(back).toContain('<i>[Aust]</i>')
     expect(back).toContain('<b>Hallo</b>')
+
+    // VocabID should be the word's UUID
+    expect(vocabId).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890')
 
     // sfld should be the plain word
     expect(notes[0].values[0][1]).toBe('hello')

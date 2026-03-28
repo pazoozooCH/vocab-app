@@ -39,6 +39,13 @@ src/
 - Prefer interfaces for contracts, types for unions/intersections
 - Use branded types or value objects for domain identifiers (e.g., `WordId`, `DeckId`)
 
+### Server State (TanStack Query)
+
+- Use **TanStack Query** (`useQuery`, `useMutation`, `useQueryClient`) for all data fetching from Supabase — never use raw `useEffect` + `useState` for loading server data.
+- Query keys follow the pattern: `['entity', userId, ...filters]` (e.g., `['decks', userId, 'EN']`, `['words', userId, deckId, status]`).
+- After mutations (create, update, delete), invalidate relevant queries with `queryClient.invalidateQueries({ queryKey: ['entity'] })`.
+- Default stale time is 30s — data is served from cache within that window, avoiding duplicate requests.
+
 ### Test-Driven Development (TDD)
 
 - **Write tests first**, then implement to make them pass
@@ -89,6 +96,7 @@ src/
 |-----------------|-----------------------------------|
 | Language        | TypeScript (strict mode)          |
 | Frontend        | React + Vite                      |
+| Server State    | TanStack Query (React Query)      |
 | Database + Auth | Supabase (PostgreSQL + Google OAuth) |
 | AI              | Gemini API (Vercel serverless fn) |
 | Unit Tests      | Vitest                            |

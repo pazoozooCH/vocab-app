@@ -52,7 +52,7 @@ This app automates steps 2–5 into a single action.
 
 | Layer       | Technology                          |
 |-------------|-------------------------------------|
-| Frontend    | React + TypeScript (Vite)           |
+| Frontend    | React + TypeScript (Vite) + TanStack Query |
 | Backend     | None — Supabase client SDK for DB/auth, single Vercel serverless function for Gemini API |
 | Database    | Supabase (PostgreSQL, free tier)    |
 | Auth        | Supabase Auth with Google OAuth     |

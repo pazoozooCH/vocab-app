@@ -101,9 +101,11 @@ describe('generateApkg', () => {
     // Should have 3 fields: Front, Back, VocabID
     expect(parts).toHaveLength(3)
 
-    // Front should contain the word and source sentences with HTML bold
+    // Front should contain the word (centered) and source sentences (left-aligned) with HTML bold
     expect(front).toContain('<b>hello</b>')
+    expect(front).toContain('text-align:left')
     expect(front).toContain('<b>Hello</b>')
+    expect(front).not.toContain('<hr>')
 
     // Back should contain translations with HTML formatting
     expect(back).toContain('hallo')

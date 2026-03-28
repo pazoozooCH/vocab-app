@@ -11,8 +11,9 @@ function mdToHtml(text: string): string {
 function formatFront(word: Word): string {
   const lines = [
     `<div style="font-size:1.4em;font-weight:bold;">${mdToHtml(word.word)}</div>`,
-    '<hr>',
+    '<div style="text-align:left;margin-top:0.5em;">',
     ...word.sentencesSource.map((s) => `<div>${mdToHtml(s)}</div>`),
+    '</div>',
   ]
   return lines.join('\n')
 }
@@ -21,8 +22,9 @@ function formatBack(word: Word): string {
   const translationText = word.translations.map(mdToHtml).join(', ')
   const lines = [
     `<div style="font-size:1.4em;font-weight:bold;">${translationText}</div>`,
-    '<hr>',
+    '<div style="text-align:left;margin-top:0.5em;">',
     ...word.sentencesGerman.map((s) => `<div>${mdToHtml(s)}</div>`),
+    '</div>',
   ]
   return lines.join('\n')
 }

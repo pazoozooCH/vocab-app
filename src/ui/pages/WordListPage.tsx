@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import type { WordStatus } from '../../domain/values/WordStatus'
 import { WordStatus as WordStatusEnum } from '../../domain/values/WordStatus'
 import { Language } from '../../domain/values/Language'
@@ -45,6 +45,37 @@ export function WordListPage() {
 
   const enDecks = useMemo(() => decks.filter((d) => d.language === Language.EN), [decks])
   const frDecks = useMemo(() => decks.filter((d) => d.language === Language.FR), [decks])
+
+  const PAGE_SIZE = 30
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset pagination on filter change
+    setVisibleCount(PAGE_SIZE)
+  }, [deckFilter, status])
+
+  const visibleWords = useMemo(() => words.slice(0, visibleCount), [words, visibleCount])
+  const hasMore = visibleCount < words.length
+
+  // Infinite scroll: observe sentinel element
+  const observerCallback = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (entries[0].isIntersecting && hasMore) {
+        setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, words.length))
+      }
+    },
+    [hasMore, words.length],
+  )
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(observerCallback, { rootMargin: '200px' })
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [observerCallback])
 
   const handleDelete = async (word: Word) => {
     if (!user) return
@@ -112,9 +143,15 @@ export function WordListPage() {
         <div id="empty-state" className="empty-state">No words found.</div>
       ) : (
         <div id="word-list" className="word-list">
-          {words.map((w) => (
+          <div className="word-list__count">{words.length} word{words.length !== 1 ? 's' : ''}</div>
+          {visibleWords.map((w) => (
             <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} onDelete={handleDelete} />
           ))}
+          {hasMore && (
+            <div ref={sentinelRef} className="word-list__loading">
+              Loading more…
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -651,6 +651,19 @@ select:focus {
   gap: 12px;
 }
 
+.word-list__count {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.word-list__loading {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 16px;
+  font-size: 0.875rem;
+}
+
 .word-list-filters {
   display: flex;
   flex-direction: column;

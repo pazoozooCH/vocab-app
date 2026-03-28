@@ -58,7 +58,8 @@ body {
 .layout {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .top-bar {
@@ -154,6 +155,7 @@ body {
 
 .main-content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 16px;
@@ -668,6 +670,11 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: sticky;
+  top: 0;
+  background: var(--color-bg);
+  padding-bottom: 8px;
+  z-index: 5;
 }
 
 /* Export Page */
@@ -851,7 +858,6 @@ select:focus {
 
 @media (min-width: 768px) {
   .main-content {
-    padding: 24px;
     padding: 24px;
   }
 

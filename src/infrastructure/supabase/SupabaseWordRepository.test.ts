@@ -114,6 +114,71 @@ describe('SupabaseWordRepository', () => {
     expect(found).toBeNull()
   })
 
+  it('findPaginated returns paginated results with total count', async () => {
+    for (let i = 0; i < 5; i++) {
+      await wordRepo.save(makeWord({ word: `word-${i}` }))
+    }
+
+    const page1 = await wordRepo.findPaginated(TEST_USER_ID, { offset: 0, limit: 2 })
+    expect(page1.words).toHaveLength(2)
+    expect(page1.total).toBe(5)
+    expect(page1.hasMore).toBe(true)
+
+    const page2 = await wordRepo.findPaginated(TEST_USER_ID, { offset: 2, limit: 2 })
+    expect(page2.words).toHaveLength(2)
+    expect(page2.hasMore).toBe(true)
+
+    const page3 = await wordRepo.findPaginated(TEST_USER_ID, { offset: 4, limit: 2 })
+    expect(page3.words).toHaveLength(1)
+    expect(page3.hasMore).toBe(false)
+  })
+
+  it('findPaginated filters by deck', async () => {
+    await wordRepo.save(makeWord({ word: 'hello', deckId: enDeckId }))
+    await wordRepo.save(makeWord({ word: 'bonjour', deckId: frDeckId }))
+
+    const result = await wordRepo.findPaginated(TEST_USER_ID, { deckId: enDeckId, offset: 0, limit: 10 })
+    expect(result.words).toHaveLength(1)
+    expect(result.words[0].word).toBe('hello')
+    expect(result.total).toBe(1)
+  })
+
+  it('findPaginated filters by status', async () => {
+    await wordRepo.save(makeWord({ word: 'pending-word', status: WordStatus.Pending }))
+    await wordRepo.save(makeWord({ word: 'exported-word', status: WordStatus.Exported }))
+
+    const result = await wordRepo.findPaginated(TEST_USER_ID, { status: WordStatus.Pending, offset: 0, limit: 10 })
+    expect(result.words).toHaveLength(1)
+    expect(result.words[0].word).toBe('pending-word')
+  })
+
+  it('findPaginated searches by word text', async () => {
+    await wordRepo.save(makeWord({ word: 'hello' }))
+    await wordRepo.save(makeWord({ word: 'goodbye' }))
+    await wordRepo.save(makeWord({ word: 'help' }))
+
+    const result = await wordRepo.findPaginated(TEST_USER_ID, { search: 'hel', offset: 0, limit: 10 })
+    expect(result.words).toHaveLength(2)
+    expect(result.total).toBe(2)
+    const words = result.words.map((w) => w.word).sort()
+    expect(words).toEqual(['hello', 'help'])
+  })
+
+  it('findPaginated with searchSentences searches across all fields', async () => {
+    await wordRepo.save(makeWord({ word: 'hello' }))
+    await wordRepo.save(makeWord({ word: 'goodbye' }))
+
+    // Search for a term in the German sentences (both have 'Hallo' in sentencesGerman)
+    const result = await wordRepo.findPaginated(TEST_USER_ID, {
+      search: 'Hallo',
+      searchSentences: true,
+      offset: 0,
+      limit: 10,
+    })
+    // Both words have 'Hallo' in their German sentences
+    expect(result.words).toHaveLength(2)
+  })
+
   it('cascade deletes words when deck is deleted', async () => {
     await wordRepo.save(makeWord({ word: 'hello', deckId: enDeckId }))
     await wordRepo.save(makeWord({ word: 'world', deckId: enDeckId }))

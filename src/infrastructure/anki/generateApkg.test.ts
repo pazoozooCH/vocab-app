@@ -101,16 +101,17 @@ describe('generateApkg', () => {
     // Should have 3 fields: Front, Back, VocabID
     expect(parts).toHaveLength(3)
 
-    // Front should contain the word (centered) and source sentences (left-aligned) with HTML bold
+    // Front: word + ordered list of sentences with HTML bold
     expect(front).toContain('<b>hello</b>')
-    expect(front).toContain('text-align:left')
-    expect(front).toContain('<b>Hello</b>')
-    expect(front).not.toContain('<hr>')
+    expect(front).toContain('<ol>')
+    expect(front).toContain('<li><b>Hello</b>')
+    expect(front).not.toContain('1.') // ordinal prefix stripped, <ol> handles numbering
 
-    // Back should contain translations with HTML formatting
+    // Back: translations + ordered list of German sentences
     expect(back).toContain('hallo')
     expect(back).toContain('<i>[Aust]</i>')
-    expect(back).toContain('<b>Hallo</b>')
+    expect(back).toContain('<ol>')
+    expect(back).toContain('<li><b>Hallo</b>')
 
     // VocabID should be the word's UUID
     expect(vocabId).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890')

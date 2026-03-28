@@ -8,25 +8,20 @@ function mdToHtml(text: string): string {
     .replace(/_(\[.+?\])_/g, '<i>$1</i>')
 }
 
+// Strip ordinal prefixes (e.g. "1. ", "2. ") since we use <ol> for numbering
+function stripOrdinal(text: string): string {
+  return text.replace(/^\d+\.\s*/, '')
+}
+
 function formatFront(word: Word): string {
-  const lines = [
-    `<div style="font-size:1.4em;font-weight:bold;">${mdToHtml(word.word)}</div>`,
-    '<div style="text-align:left;margin-top:0.5em;">',
-    ...word.sentencesSource.map((s) => `<div>${mdToHtml(s)}</div>`),
-    '</div>',
-  ]
-  return lines.join('\n')
+  const sentences = word.sentencesSource.map((s) => `<li>${mdToHtml(stripOrdinal(s))}</li>`).join('')
+  return `${mdToHtml(word.word)}<br><ol>${sentences}</ol>`
 }
 
 function formatBack(word: Word): string {
   const translationText = word.translations.map(mdToHtml).join(', ')
-  const lines = [
-    `<div style="font-size:1.4em;font-weight:bold;">${translationText}</div>`,
-    '<div style="text-align:left;margin-top:0.5em;">',
-    ...word.sentencesGerman.map((s) => `<div>${mdToHtml(s)}</div>`),
-    '</div>',
-  ]
-  return lines.join('\n')
+  const sentences = word.sentencesGerman.map((s) => `<li>${mdToHtml(stripOrdinal(s))}</li>`).join('')
+  return `${translationText}<br><ol>${sentences}</ol>`
 }
 
 // Generate a deterministic large positive ID from a string

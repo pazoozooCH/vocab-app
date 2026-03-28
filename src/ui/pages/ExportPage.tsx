@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Language } from '../../domain/values/Language'
 import { WordStatus } from '../../domain/values/WordStatus'
 import type { Word } from '../../domain/entities/Word'
@@ -9,6 +10,7 @@ import { useDecks } from '../hooks/useDecks'
 import { useWords } from '../hooks/useWords'
 import { ExportCard } from '../components/ExportCard'
 import { generateApkg } from '../../infrastructure/anki/generateApkg'
+import { getDeckName } from '../hooks/useDeckName'
 
 type DeckFilter = string
 
@@ -19,17 +21,13 @@ function parseDeckFilter(filter: DeckFilter): { deckId?: string; language?: Lang
   return {}
 }
 
-import { getDeckName } from '../hooks/useDeckName'
-
-
 export function ExportPage() {
   const { user } = useAuth()
   const { wordRepository, exportRepository } = useServices()
   const { decks } = useDecks()
+  const queryClient = useQueryClient()
   const [deckFilter, setDeckFilter] = useState<DeckFilter>('')
   const [exporting, setExporting] = useState(false)
-  const [exports, setExports] = useState<ExportEntity[]>([])
-  const [exportWords, setExportWords] = useState<Record<string, Word[]>>({})
 
   const { deckId: filterDeckId, language: filterLanguage } = useMemo(
     () => parseDeckFilter(deckFilter),
@@ -49,34 +47,37 @@ export function ExportPage() {
   const enDecks = useMemo(() => decks.filter((d) => d.language === Language.EN), [decks])
   const frDecks = useMemo(() => decks.filter((d) => d.language === Language.FR), [decks])
 
-  const loadExports = useCallback(async () => {
-    if (!user) return
-    const exps = await exportRepository.findAllByUser(user.id)
-    setExports(exps)
+  // Load exports and their words via TanStack Query
+  const { data: exportsData } = useQuery({
+    queryKey: ['exports', user?.id],
+    queryFn: async () => {
+      const exps = await exportRepository.findAllByUser(user!.id)
+      // Load words for each export in parallel
+      const wordsMap: Record<string, Word[]> = {}
+      await Promise.all(
+        exps.map(async (exp) => {
+          const words = await Promise.all(
+            exp.wordIds.map((id) => wordRepository.findById(id, user!.id)),
+          )
+          wordsMap[exp.id] = words.filter((w): w is Word => w !== null)
+        }),
+      )
+      return { exports: exps, exportWords: wordsMap }
+    },
+    enabled: !!user,
+  })
 
-    // Load words for each export
-    const wordsMap: Record<string, Word[]> = {}
-    for (const exp of exps) {
-      const words: Word[] = []
-      for (const wordId of exp.wordIds) {
-        const w = await wordRepository.findById(wordId, user.id)
-        if (w) words.push(w)
-      }
-      wordsMap[exp.id] = words
-    }
-    setExportWords(wordsMap)
-  }, [user, exportRepository, wordRepository])
+  const exports = exportsData?.exports ?? []
+  const exportWords = exportsData?.exportWords ?? {}
 
-  useEffect(() => {
-    loadExports()
-  }, [loadExports])
+  const invalidateExports = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['exports'] })
+  }
 
   const handleExport = async () => {
     if (!user || pendingWords.length === 0) return
     setExporting(true)
     try {
-      // Determine deck name for the .apkg file
-      // If filtering by a specific deck, use that name; otherwise use the first word's deck
       // Build words with their deck names for the .apkg generator
       const wordsWithDecks = pendingWords.map((w) => ({
         word: w,
@@ -103,7 +104,7 @@ export function ExportPage() {
         { exportRepository },
       )
 
-      await loadExports()
+      await invalidateExports()
     } finally {
       setExporting(false)
     }
@@ -112,21 +113,21 @@ export function ExportPage() {
   const handleConfirm = async (exp: ExportEntity) => {
     if (!user) return
     await confirmExport(exp.id, user.id, { exportRepository, wordRepository })
-    await loadExports()
+    await invalidateExports()
     await reloadPending()
   }
 
   const handleFail = async (exp: ExportEntity) => {
     if (!user) return
     await failExport(exp.id, user.id, { exportRepository })
-    await loadExports()
+    await invalidateExports()
   }
 
   const handleDelete = async (exp: ExportEntity) => {
     if (!user) return
     if (!confirm('Delete this export record?')) return
     await exportRepository.delete(exp.id, user.id)
-    await loadExports()
+    await invalidateExports()
   }
 
   return (

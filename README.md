@@ -277,6 +277,8 @@ npm run test:e2e     # Run Playwright e2e tests (headless)
 npm run lint         # ESLint + type-check
 npm run build        # Production build
 npm run format       # Prettier format all files
+npm run check        # Fail-fast CI: lint → test → build → e2e (stops on first failure)
+npm run check:all    # Full CI: runs all checks, reports all failures
 
 npm run db:start     # Start local Supabase (Docker)
 npm run db:stop      # Stop local Supabase
@@ -284,6 +286,16 @@ npm run db:restart   # Restart local Supabase (picks up config changes)
 npm run db:reset     # Reset local DB and re-run all migrations
 npm run db:push      # Push migrations to cloud Supabase (production)
 ```
+
+#### Check timings
+
+Checks run in two parallel phases for speed:
+
+| Phase | Steps (parallel)       | Duration |
+|-------|------------------------|----------|
+| 1     | lint (~10s) + test (~5s) | ~10s   |
+| 2     | build (~5s) + e2e (~37s) | ~37s   |
+| **total** | `npm run check`    | **~48s** |
 
 To see the browser during e2e tests: `npx playwright test --headed`
 For interactive step-through mode: `npx playwright test --ui`

@@ -59,8 +59,8 @@ src/
   - E2E tests live in `e2e/` directory
   - Run against a local or staging environment
   - Use element IDs (`#my-element`) to select DOM elements whenever possible — avoids brittle CSS class selectors
-- Run tests before committing: `npm test`
-- Run e2e tests: `npm run test:e2e`
+- **Always run `npm run check` to validate before considering work done.** This is the single source of truth for correctness — it runs lint, tests, build, and e2e in parallel with fail-fast. Do not rely on running individual checks separately.
+- For quick iteration on a specific issue, individual commands (`npm test`, `npm run lint`) are fine, but always finish with `npm run check`.
 
 ### Documentation
 
@@ -118,7 +118,8 @@ src/
 ## Key Commands
 
 ```bash
-npm run check        # Quiet CI: build + lint + test + e2e (errors only, use this for validation)
+npm run check        # Fail-fast CI: (lint+test) → (build+e2e) parallel phases (~48s)
+npm run check:all    # Full CI: runs all checks, reports all failures
 npm run dev          # Start local dev server
 npm test             # Run unit/integration tests (Vitest)
 npm run test:e2e     # Run Playwright e2e tests

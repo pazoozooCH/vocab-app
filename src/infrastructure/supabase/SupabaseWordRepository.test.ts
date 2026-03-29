@@ -34,6 +34,7 @@ function makeWord(overrides: Partial<{ id: string; word: string; status: WordSta
     status: overrides.status ?? WordStatus.Pending,
     createdAt: new Date('2026-03-25'),
     exportedAt: null,
+    ankiGuid: null,
   })
 }
 

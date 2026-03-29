@@ -34,5 +34,8 @@ export interface WordRepository {
   findDuplicates(word: string, language: Language, userId: string, excludeId?: string): Promise<Word[]>
   markExportedBatch(wordIds: string[], userId: string, exportedAt: Date): Promise<void>
   update(word: Word): Promise<void>
+  updateBatch(words: Word[]): Promise<void>
   delete(id: string, userId: string): Promise<void>
+  findByAnkiGuids(guids: string[], userId: string): Promise<Word[]>
+  saveBatch(words: Word[]): Promise<void>
 }

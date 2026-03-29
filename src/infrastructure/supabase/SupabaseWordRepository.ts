@@ -17,6 +17,7 @@ interface WordRow {
   status: string
   created_at: string
   exported_at: string | null
+  anki_guid: string | null
 }
 
 function toDomain(row: WordRow): Word {
@@ -32,6 +33,7 @@ function toDomain(row: WordRow): Word {
     status: row.status as WordStatus,
     createdAt: new Date(row.created_at),
     exportedAt: row.exported_at ? new Date(row.exported_at) : null,
+    ankiGuid: row.anki_guid,
   })
 }
 
@@ -55,6 +57,7 @@ export class SupabaseWordRepository implements WordRepository {
       status: word.status,
       created_at: word.createdAt.toISOString(),
       exported_at: word.exportedAt?.toISOString() ?? null,
+      anki_guid: word.ankiGuid,
     }).select()
     if (error) throw error
     if (!data || data.length === 0) throw new Error('Word was not saved (possibly blocked by RLS)')
@@ -148,6 +151,7 @@ export class SupabaseWordRepository implements WordRepository {
 
     const { data, error, count } = await query
       .order(orderColumn, { ascending })
+      .order('id', { ascending: true })
       .range(params.offset, params.offset + params.limit - 1)
 
     if (error) throw error
@@ -233,10 +237,46 @@ export class SupabaseWordRepository implements WordRepository {
         deck_id: word.deckId,
         status: word.status,
         exported_at: word.exportedAt?.toISOString() ?? null,
+        anki_guid: word.ankiGuid,
       })
       .eq('id', word.id)
       .eq('user_id', word.userId)
     if (error) throw error
+  }
+
+  async updateBatch(words: Word[]): Promise<void> {
+    if (words.length === 0) return
+    // Supabase doesn't support bulk update natively, so we do individual updates
+    // but in parallel for performance
+    const BATCH_SIZE = 50
+    for (let i = 0; i < words.length; i += BATCH_SIZE) {
+      const batch = words.slice(i, i + BATCH_SIZE)
+      await Promise.all(batch.map((word) => this.update(word)))
+    }
+  }
+
+  async saveBatch(words: Word[]): Promise<void> {
+    if (words.length === 0) return
+    const BATCH_SIZE = 100
+    for (let i = 0; i < words.length; i += BATCH_SIZE) {
+      const batch = words.slice(i, i + BATCH_SIZE)
+      const rows = batch.map((word) => ({
+        id: word.id,
+        user_id: word.userId,
+        word: word.word,
+        language: word.language,
+        translations: [...word.translations],
+        sentences_source: [...word.sentencesSource],
+        sentences_german: [...word.sentencesGerman],
+        deck_id: word.deckId,
+        status: word.status,
+        created_at: word.createdAt.toISOString(),
+        exported_at: word.exportedAt?.toISOString() ?? null,
+        anki_guid: word.ankiGuid,
+      }))
+      const { error } = await this.client.from('words').insert(rows).select()
+      if (error) throw error
+    }
   }
 
   async delete(id: string, userId: string): Promise<void> {
@@ -246,5 +286,23 @@ export class SupabaseWordRepository implements WordRepository {
       .eq('id', id)
       .eq('user_id', userId)
     if (error) throw error
+  }
+
+  async findByAnkiGuids(guids: string[], userId: string): Promise<Word[]> {
+    if (guids.length === 0) return []
+    // Batch to avoid URL length limits (each guid can be ~10 chars, 200 per batch is safe)
+    const BATCH_SIZE = 200
+    const results: Word[] = []
+    for (let i = 0; i < guids.length; i += BATCH_SIZE) {
+      const batch = guids.slice(i, i + BATCH_SIZE)
+      const { data, error } = await this.client
+        .from('words')
+        .select()
+        .eq('user_id', userId)
+        .in('anki_guid', batch)
+      if (error) throw error
+      if (data) results.push(...data.map(toDomain))
+    }
+    return results
   }
 }

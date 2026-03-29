@@ -14,6 +14,7 @@ interface WordProps {
   status: WordStatus
   createdAt: Date
   exportedAt: Date | null
+  ankiGuid: string | null
 }
 
 export class Word {
@@ -28,6 +29,7 @@ export class Word {
   readonly status: WordStatus
   readonly createdAt: Date
   readonly exportedAt: Date | null
+  readonly ankiGuid: string | null
 
   private constructor(props: WordProps) {
     this.id = props.id
@@ -41,6 +43,7 @@ export class Word {
     this.status = props.status
     this.createdAt = props.createdAt
     this.exportedAt = props.exportedAt
+    this.ankiGuid = props.ankiGuid
   }
 
   static create(props: WordProps): Word {
@@ -67,6 +70,7 @@ export class Word {
       status: WordStatusEnum.Exported,
       createdAt: this.createdAt,
       exportedAt,
+      ankiGuid: this.ankiGuid,
     })
   }
 }

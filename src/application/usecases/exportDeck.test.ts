@@ -21,6 +21,7 @@ function makeWord(overrides: Partial<{ word: string; id: string }> = {}): Word {
     status: WordStatus.Pending,
     createdAt: new Date('2026-03-25'),
     exportedAt: null,
+    ankiGuid: null,
   })
 }
 
@@ -46,7 +47,10 @@ function createMockWordRepository(): WordRepository {
     markExportedBatch: vi.fn(),
     findDuplicates: vi.fn().mockResolvedValue([]),
     update: vi.fn(),
+    updateBatch: vi.fn(),
     delete: vi.fn(),
+    findByAnkiGuids: vi.fn().mockResolvedValue([]),
+    saveBatch: vi.fn(),
   }
 }
 

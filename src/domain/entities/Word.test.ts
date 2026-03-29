@@ -16,6 +16,7 @@ describe('Word', () => {
     status: WordStatus.Pending,
     createdAt: new Date('2026-03-25'),
     exportedAt: null,
+    ankiGuid: null,
   }
 
   it('creates a word with valid properties', () => {

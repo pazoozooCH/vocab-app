@@ -44,6 +44,7 @@ export async function addWord(
     status: WordStatus.Pending,
     createdAt: new Date(),
     exportedAt: null,
+    ankiGuid: null,
   })
 
   await deps.wordRepository.save(word)

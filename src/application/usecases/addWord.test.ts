@@ -17,7 +17,10 @@ function createMockWordRepository(): WordRepository {
     markExportedBatch: vi.fn(),
     findDuplicates: vi.fn().mockResolvedValue([]),
     update: vi.fn(),
+    updateBatch: vi.fn(),
     delete: vi.fn(),
+    findByAnkiGuids: vi.fn().mockResolvedValue([]),
+    saveBatch: vi.fn(),
   }
 }
 

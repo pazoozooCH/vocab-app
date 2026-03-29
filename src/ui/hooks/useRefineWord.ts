@@ -29,6 +29,7 @@ export function useRefineWord() {
       status: originalWord.status as typeof WordStatus.Pending | typeof WordStatus.Exported,
       createdAt: originalWord.createdAt,
       exportedAt: originalWord.exportedAt,
+      ankiGuid: originalWord.ankiGuid,
     })
 
     await wordRepository.update(refined)

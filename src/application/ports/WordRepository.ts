@@ -2,12 +2,17 @@ import type { Word } from '../../domain/entities/Word'
 import type { Language } from '../../domain/values/Language'
 import type { WordStatus } from '../../domain/values/WordStatus'
 
+export type WordSortField = 'created_at' | 'word' | 'translation'
+export type WordSortDirection = 'asc' | 'desc'
+
 export interface WordSearchParams {
   deckId?: string
   language?: Language
   status?: WordStatus
   search?: string
   searchSentences?: boolean
+  sortBy?: WordSortField
+  sortDir?: WordSortDirection
   offset: number
   limit: number
 }

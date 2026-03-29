@@ -125,8 +125,18 @@ export class SupabaseWordRepository implements WordRepository {
       query = query.ilike('word', `%${params.search}%`)
     }
 
+    const sortBy = params.sortBy ?? 'created_at'
+    const sortDir = params.sortDir ?? 'desc'
+
+    // Map sort fields to actual DB columns
+    // word/translation use generated lower() columns for case-insensitive sorting
+    const orderColumn = sortBy === 'word' ? 'word_lower'
+      : sortBy === 'translation' ? 'translation_lower'
+      : 'created_at'
+    const ascending = sortBy === 'created_at' ? sortDir === 'asc' : true
+
     const { data, error, count } = await query
-      .order('created_at', { ascending: false })
+      .order(orderColumn, { ascending })
       .range(params.offset, params.offset + params.limit - 1)
 
     if (error) throw error
@@ -156,6 +166,16 @@ export class SupabaseWordRepository implements WordRepository {
       w.sentencesSource.some((s) => s.toLowerCase().includes(term)) ||
       w.sentencesGerman.some((s) => s.toLowerCase().includes(term))
     )
+
+    const sortBy = params.sortBy ?? 'created_at'
+    const sortDir = params.sortDir ?? 'desc'
+    filtered.sort((a, b) => {
+      if (sortBy === 'word') return a.word.localeCompare(b.word, undefined, { sensitivity: 'base' })
+      if (sortBy === 'translation') return (a.translations[0] ?? '').localeCompare(b.translations[0] ?? '', undefined, { sensitivity: 'base' })
+      const diff = a.createdAt.getTime() - b.createdAt.getTime()
+      return sortDir === 'asc' ? diff : -diff
+    })
+    // Note: for sentence search, sorting is done client-side since we already fetched all data
 
     const total = filtered.length
     const words = filtered.slice(params.offset, params.offset + params.limit)

@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import type { WordStatus } from '../../domain/values/WordStatus'
 import type { Language } from '../../domain/values/Language'
+import type { WordSortField, WordSortDirection } from '../../application/ports/WordRepository'
 import { useAuth, useServices } from '../context/AppContext'
 import { useCallback, useMemo } from 'react'
 
@@ -12,6 +13,8 @@ interface UseWordsOptions {
   status?: WordStatus
   search?: string
   searchSentences?: boolean
+  sortBy?: WordSortField
+  sortDir?: WordSortDirection
 }
 
 export function useWords(options: UseWordsOptions = {}) {
@@ -27,6 +30,8 @@ export function useWords(options: UseWordsOptions = {}) {
     options.status ?? 'all',
     options.search ?? '',
     options.searchSentences ?? false,
+    options.sortBy ?? 'created_at',
+    options.sortDir ?? 'desc',
   ]
 
   const {
@@ -44,6 +49,8 @@ export function useWords(options: UseWordsOptions = {}) {
         status: options.status,
         search: options.search || undefined,
         searchSentences: options.searchSentences,
+        sortBy: options.sortBy,
+        sortDir: options.sortDir,
         offset: pageParam,
         limit: PAGE_SIZE,
       }),

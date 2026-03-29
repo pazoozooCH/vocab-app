@@ -6,6 +6,7 @@ import { useAuth, useServices } from '../context/AppContext'
 import { useDecks } from '../hooks/useDecks'
 import { useWords } from '../hooks/useWords'
 import { usePersistedState } from '../hooks/usePersistedState'
+import type { WordSortField, WordSortDirection } from '../../application/ports/WordRepository'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
 import { getDeckName } from '../hooks/useDeckName'
 import type { Word } from '../../domain/entities/Word'
@@ -29,6 +30,9 @@ export function WordListPage() {
   const [search, setSearch] = useState('')
   const [searchSentences, setSearchSentences] = useState(false)
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [sortBy, setSortBy] = usePersistedState<WordSortField>('wordList.sortBy', 'created_at')
+  const [sortDir, setSortDir] = usePersistedState<WordSortDirection>('wordList.sortDir', 'desc')
+  const [showSortMenu, setShowSortMenu] = useState(false)
 
   // Debounce search input
   useEffect(() => {
@@ -47,7 +51,19 @@ export function WordListPage() {
     status: (status as WordStatus) || undefined,
     search: debouncedSearch || undefined,
     searchSentences,
+    sortBy,
+    sortDir,
   })
+
+  const handleSort = (field: WordSortField, dir: WordSortDirection) => {
+    setSortBy(field)
+    setSortDir(dir)
+    setShowSortMenu(false)
+  }
+
+  const sortLabel = sortBy === 'created_at'
+    ? (sortDir === 'desc' ? 'Newest' : 'Oldest')
+    : sortBy === 'word' ? 'A→Z (word)' : 'A→Z (translation)'
 
   const enDecks = useMemo(() => decks.filter((d) => d.language === Language.EN), [decks])
   const frDecks = useMemo(() => decks.filter((d) => d.language === Language.FR), [decks])
@@ -147,6 +163,22 @@ export function WordListPage() {
             />
             Include sentences
           </label>
+          <div className="sort-control">
+            <button
+              className="sort-control__btn"
+              onClick={() => setShowSortMenu((v) => !v)}
+            >
+              ↕ {sortLabel}
+            </button>
+            {showSortMenu && (
+              <div className="sort-control__menu">
+                <button className={sortBy === 'created_at' && sortDir === 'desc' ? 'active' : ''} onClick={() => handleSort('created_at', 'desc')}>Newest first</button>
+                <button className={sortBy === 'created_at' && sortDir === 'asc' ? 'active' : ''} onClick={() => handleSort('created_at', 'asc')}>Oldest first</button>
+                <button className={sortBy === 'word' ? 'active' : ''} onClick={() => handleSort('word', 'asc')}>Word A→Z</button>
+                <button className={sortBy === 'translation' ? 'active' : ''} onClick={() => handleSort('translation', 'asc')}>Translation A→Z</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

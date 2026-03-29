@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Word } from '../../domain/entities/Word'
 import { renderMarkdown } from './renderMarkdown'
 import { WordRow } from './WordRow'
+import { RelativeTime } from './RelativeTime'
 
 interface WordCardProps {
   word: Word
@@ -56,7 +57,10 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
       </div>
 
       <div className="word-card__meta">
-        {deckName && <span className="word-card__deck">{deckName}</span>}
+        <span className="word-card__info">
+          {deckName && <span className="word-card__deck">{deckName}</span>}
+          <span className="word-card__time"><RelativeTime date={word.createdAt} /></span>
+        </span>
         <div className="word-card__actions">
           {duplicates && duplicates.length > 0 && (
             <button

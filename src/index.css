@@ -521,6 +521,16 @@ select:focus {
   color: var(--color-text-muted);
 }
 
+.word-card__info {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.word-card__time {
+  opacity: 0.6;
+}
+
 .word-card__actions {
   display: flex;
   gap: 4px;

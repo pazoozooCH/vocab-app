@@ -4,6 +4,10 @@ import { execSync } from 'child_process'
 import react from '@vitejs/plugin-react'
 
 function getBuildInfo() {
+  // Vercel uses shallow clones, so unshallow first for accurate commit count
+  if (process.env.VERCEL) {
+    try { execSync('git fetch --unshallow 2>/dev/null || true') } catch { /* already unshallowed */ }
+  }
   const commitCount = execSync('git rev-list --count HEAD').toString().trim()
   const commitHash = process.env.VERCEL_GIT_COMMIT_SHA
     ?? execSync('git rev-parse HEAD').toString().trim()

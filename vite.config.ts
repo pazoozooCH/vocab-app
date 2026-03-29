@@ -4,9 +4,16 @@ import { execSync } from 'child_process'
 import react from '@vitejs/plugin-react'
 
 function getBuildInfo() {
-  // Vercel uses shallow clones, so unshallow first for accurate commit count
+  // Vercel uses shallow clones where git rev-list --count is inaccurate.
+  // Try to unshallow; if that fails, fetch full history via --depth.
   if (process.env.VERCEL) {
-    try { execSync('git fetch --unshallow 2>/dev/null || true') } catch { /* already unshallowed */ }
+    try {
+      execSync('git fetch --unshallow 2>&1', { stdio: 'pipe' })
+    } catch {
+      try {
+        execSync('git fetch --depth=2147483647 2>&1', { stdio: 'pipe' })
+      } catch { /* best effort */ }
+    }
   }
   const commitCount = execSync('git rev-list --count HEAD').toString().trim()
   const commitHash = process.env.VERCEL_GIT_COMMIT_SHA

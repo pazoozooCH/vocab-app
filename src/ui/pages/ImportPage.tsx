@@ -292,6 +292,8 @@ function ImportPreview({
 }
 
 function DeckBreakdown({ categorized, newDecks }: { categorized: CategorizedNote[]; newDecks: string[] }) {
+  const [expandedDeck, setExpandedDeck] = useState<string | null>(null)
+
   // Count categories per deck — all decks, not just new ones
   const deckStats = new Map<string, { new: number; updated: number; unchanged: number }>()
   for (const { note, category } of categorized) {
@@ -317,6 +319,16 @@ function DeckBreakdown({ categorized, newDecks }: { categorized: CategorizedNote
 
   if (sorted.length === 0) return null
 
+  // Notes for the expanded deck (non-unchanged, most interesting first)
+  const expandedNotes = expandedDeck
+    ? categorized
+        .filter((c) => c.note.deckName === expandedDeck && c.category !== 'unchanged')
+        .sort((a, b) => {
+          const order: Record<string, number> = { 'vocab-sync': 0, 'updated': 1, 'new': 2 }
+          return (order[a.category] ?? 3) - (order[b.category] ?? 3)
+        })
+    : []
+
   return (
     <div className="import-preview__section">
       <h3>By deck ({sorted.length})</h3>
@@ -332,20 +344,51 @@ function DeckBreakdown({ categorized, newDecks }: { categorized: CategorizedNote
         {sorted.map(([name, stats]) => {
           const total = stats.new + stats.updated + stats.unchanged
           const isNew = newDeckSet.has(name)
+          const isExpanded = expandedDeck === name
+          const hasDetails = stats.new + stats.updated > 0
           return (
-            <div key={name} className="import-preview__row">
-              <span className="import-preview__deck-name">
-                {name}
-                {isNew && <span className="import-preview__new-badge">new</span>}
-              </span>
-              {total > 0 ? (
-                <span className="import-preview__row-counts">
-                  <span className="import-preview__count--new">{stats.new}</span>
-                  <span className="import-preview__count--updated">{stats.updated}</span>
-                  <span className="import-preview__count--unchanged">{stats.unchanged}</span>
+            <div key={name}>
+              <div
+                className={`import-preview__row${hasDetails ? ' import-preview__row--clickable' : ''}`}
+                onClick={hasDetails ? () => setExpandedDeck(isExpanded ? null : name) : undefined}
+              >
+                <span className="import-preview__deck-name">
+                  {name}
+                  {isNew && <span className="import-preview__new-badge">new</span>}
                 </span>
-              ) : (
-                <span className="import-preview__count--unchanged">parent</span>
+                {total > 0 ? (
+                  <span className="import-preview__row-counts">
+                    <span className="import-preview__count--new">{stats.new}</span>
+                    <span className="import-preview__count--updated">{stats.updated}</span>
+                    <span className="import-preview__count--unchanged">{stats.unchanged}</span>
+                  </span>
+                ) : (
+                  <span className="import-preview__count--unchanged">parent</span>
+                )}
+              </div>
+              {isExpanded && expandedNotes.length > 0 && (
+                <div className="import-preview__deck-details">
+                  {expandedNotes.slice(0, 50).map((c) => (
+                    <div key={c.note.guid} className="import-preview__note-detail">
+                      <span className={`import-preview__note-category import-preview__note-category--${c.category}`}>
+                        {c.category === 'vocab-sync' ? 'sync' : c.category}
+                      </span>
+                      <span className="import-preview__note-word">{c.note.word}</span>
+                      <span className="import-preview__note-arrow">{'\u2192'}</span>
+                      <span className="import-preview__note-translation">{c.note.translations[0]}</span>
+                      {c.changes && c.changes.length > 0 && (
+                        <span className="import-preview__note-changes">
+                          ({c.changes.join(', ')})
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {expandedNotes.length > 50 && (
+                    <div className="import-preview__note-detail import-preview__count--unchanged">
+                      ...and {expandedNotes.length - 50} more
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )

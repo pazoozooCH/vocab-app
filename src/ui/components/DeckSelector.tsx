@@ -60,13 +60,17 @@ export function DeckSelector({
     setNewDeckName('')
     setCreateError(null)
     setIsCreating(false)
+    setIsEditing(false)
     await onDeckCreated?.()
-    onSelect(deck.id)
+    // Use setTimeout to prevent click-through from the Create button
+    // to the Edit button that appears in the same position
+    setTimeout(() => onSelect(deck.id), 0)
   }
 
   const handleStartEdit = () => {
     const deck = decks.find((d) => d.id === selectedDeckId)
     if (!deck) return
+    setIsCreating(false)
     setEditDeckName(deck.name)
     setEditError(null)
     setIsEditing(true)
@@ -133,7 +137,10 @@ export function DeckSelector({
           onChange={(e) => {
             if (e.target.value === '__new__') {
               setIsCreating(true)
+              setIsEditing(false)
             } else {
+              setIsCreating(false)
+              setIsEditing(false)
               onSelect(e.target.value)
             }
           }}

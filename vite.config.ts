@@ -3,19 +3,28 @@ import { loadEnv } from 'vite'
 import { execSync } from 'child_process'
 import react from '@vitejs/plugin-react'
 
-function getBuildInfo() {
-  // Vercel uses shallow clones where git rev-list --count is inaccurate.
-  // Try to unshallow; if that fails, fetch full history via --depth.
-  if (process.env.VERCEL) {
+function getCommitCount(): string {
+  // Vercel uses shallow clones where git rev-list --count is wrong.
+  // Use the GitHub API to get the real count — works for public repos.
+  if (process.env.VERCEL_GIT_REPO_OWNER && process.env.VERCEL_GIT_REPO_SLUG) {
     try {
-      execSync('git fetch --unshallow 2>&1', { stdio: 'pipe' })
-    } catch {
-      try {
-        execSync('git fetch --depth=2147483647 2>&1', { stdio: 'pipe' })
-      } catch { /* best effort */ }
-    }
+      const owner = process.env.VERCEL_GIT_REPO_OWNER
+      const repo = process.env.VERCEL_GIT_REPO_SLUG
+      const sha = process.env.VERCEL_GIT_COMMIT_SHA ?? 'HEAD'
+      // GitHub API: get commit, count via first page with per_page=1 and parse Link header
+      const out = execSync(
+        `curl -sI "https://api.github.com/repos/${owner}/${repo}/commits?sha=${sha}&per_page=1"`,
+        { stdio: 'pipe' },
+      ).toString()
+      const match = out.match(/page=(\d+)>; rel="last"/)
+      if (match) return match[1]
+    } catch { /* fall through to git */ }
   }
-  const commitCount = execSync('git rev-list --count HEAD').toString().trim()
+  return execSync('git rev-list --count HEAD').toString().trim()
+}
+
+function getBuildInfo() {
+  const commitCount = getCommitCount()
   const commitHash = process.env.VERCEL_GIT_COMMIT_SHA
     ?? execSync('git rev-parse HEAD').toString().trim()
   const shortHash = commitHash.slice(0, 7)

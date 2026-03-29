@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Language } from '../../domain/values/Language'
 import { Word } from '../../domain/entities/Word'
-import { WordStatus } from '../../domain/values/WordStatus'
 import { addWord } from '../../application/usecases/addWord'
 import { useAuth, useServices } from '../context/AppContext'
 import { useDecks } from '../hooks/useDecks'
@@ -10,6 +9,7 @@ import { DeckSelector } from '../components/DeckSelector'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
 import { getDeckName } from '../hooks/useDeckName'
 import { setNavigationGuard } from '../hooks/useNavigationGuard'
+import { useRefineWord } from '../hooks/useRefineWord'
 
 type InputMode = 'single' | 'batch'
 
@@ -149,34 +149,10 @@ export function AddWordPage() {
     setResults((prev) => prev.filter((w) => w.id !== wordToDelete.id))
   }
 
+  const refineWord = useRefineWord()
+
   const handleRefine = async (originalWord: Word, context: string) => {
-    if (!user) return
-
-    // Strip any existing classifier from the word before re-translating
-    const bareWord = originalWord.word.replace(/\s*_\[.*?\]_$/, '')
-
-    const translation = await translationService.translate(
-      bareWord,
-      originalWord.language,
-      context,
-    )
-
-    const refined = Word.create({
-      id: originalWord.id,
-      userId: originalWord.userId,
-      word: translation.word ?? bareWord,
-      language: originalWord.language,
-      translations: translation.translations,
-      sentencesSource: translation.sentencesSource,
-      sentencesGerman: translation.sentencesGerman,
-      deckId: originalWord.deckId,
-      status: originalWord.status as typeof WordStatus.Pending | typeof WordStatus.Exported,
-      createdAt: originalWord.createdAt,
-      exportedAt: originalWord.exportedAt,
-    })
-
-    await wordRepository.update(refined)
-
+    const refined = await refineWord(originalWord, context)
     setResults((prev) =>
       prev.map((w) => (w.id === refined.id ? refined : w)),
     )

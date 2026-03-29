@@ -9,8 +9,9 @@ import { usePersistedState } from '../hooks/usePersistedState'
 import type { WordSortField, WordSortDirection } from '../../application/ports/WordRepository'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
 import { getDeckName } from '../hooks/useDeckName'
-import { Word } from '../../domain/entities/Word'
+import type { Word } from '../../domain/entities/Word'
 import { WordStatus as WordStatusValues } from '../../domain/values/WordStatus'
+import { useRefineWord } from '../hooks/useRefineWord'
 
 // Filter values: '' = all, 'EN' = all English, 'FR' = all French, 'deck:<id>' = specific deck
 type DeckFilter = string
@@ -24,7 +25,7 @@ function parseDeckFilter(filter: DeckFilter): { deckId?: string; language?: Lang
 
 export function WordListPage() {
   const { user } = useAuth()
-  const { wordRepository, translationService } = useServices()
+  const { wordRepository } = useServices()
   const { decks } = useDecks()
   const [deckFilter, setDeckFilter] = usePersistedState<DeckFilter>('wordList.deck', '')
   const [status, setStatus] = useState<WordStatus | ''>('')
@@ -96,28 +97,10 @@ export function WordListPage() {
     reload()
   }
 
+  const refineWord = useRefineWord()
+
   const handleRefine = async (originalWord: Word, context: string) => {
-    if (!user) return
-    const bareWord = originalWord.word.replace(/\s*_\[.*?\]_$/, '')
-    const translation = await translationService.translate(
-      bareWord,
-      originalWord.language,
-      context,
-    )
-    const refined = Word.create({
-      id: originalWord.id,
-      userId: originalWord.userId,
-      word: translation.word ?? bareWord,
-      language: originalWord.language,
-      translations: translation.translations,
-      sentencesSource: translation.sentencesSource,
-      sentencesGerman: translation.sentencesGerman,
-      deckId: originalWord.deckId,
-      status: originalWord.status as typeof WordStatusValues.Pending | typeof WordStatusValues.Exported,
-      createdAt: originalWord.createdAt,
-      exportedAt: originalWord.exportedAt,
-    })
-    await wordRepository.update(refined)
+    await refineWord(originalWord, context)
     reload()
   }
 

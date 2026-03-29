@@ -78,9 +78,11 @@ test('persists word list deck filter across navigation', async ({ page }) => {
 
   // Go to word list and select the deck filter (value is deck:<uuid> now)
   await page.click('#nav-words')
+  // Wait for the deck options to load
   const filterOption = page.locator('#deck-select option', { hasText: 'English::FilterTest' })
-  await expect(filterOption).toBeAttached()
+  await expect(filterOption).toBeAttached({ timeout: 10000 })
   const filterValue = await filterOption.getAttribute('value')
+  expect(filterValue).toBeTruthy()
   await page.selectOption('#deck-select', filterValue!)
   await expect(page.locator('#deck-select option:checked')).toContainText('English::FilterTest')
 

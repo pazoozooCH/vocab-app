@@ -70,7 +70,7 @@ Rules:
 - Include all common German translations (usually 1-3)
 - Where appropriate, add a domain/register classifier after the translation in italic markdown: _[Law]_, _[Med]_, _[Tech]_, _[Coll]_, _[Brit]_, _[Amer]_, _[Hist]_, _[Fig]_, _[Fin]_, etc. Only add classifiers when the meaning is domain-specific or register-specific — omit for common everyday meanings.
 - Generate 2-3 sample sentences in ${sourceLang} and their German translations
-- Number each sentence with an ordinal prefix (1., 2., 3.)
+- IMPORTANT: Every sentence MUST start with a number prefix: "1. ", "2. ", "3. ". This is required for both sentencesSource and sentencesGerman. Never omit the numbering.
 - Bold the vocabulary word in each sentence using **markdown bold**
 - Use natural, everyday sentences${language === 'FR' ? '\n- IMPORTANT: If the French word is a noun, the "word" field in the response MUST include the indefinite article (un/une). If the user entered just the noun without an article (e.g. "bus"), prepend it: "un bus". Always use un/une (not le/la) as they work for all nouns including those starting with a vowel (where le/la becomes l\').' : ''}
 - Return ONLY the JSON object, no other text`

@@ -123,8 +123,8 @@ export function DeckSelector({
 
     // Cascade delete: words are automatically deleted by the foreign key constraint
     await deckRepository.delete(deck.id, user.id)
-    onSelect('')
     await onDeckDeleted?.()
+    onSelect('')
   }
 
   return (
@@ -162,6 +162,7 @@ export function DeckSelector({
           <>
             <button
               id="edit-deck-btn"
+              type="button"
               className="btn btn--small btn--icon"
               onClick={handleStartEdit}
               title="Rename deck"
@@ -171,6 +172,7 @@ export function DeckSelector({
             </button>
             <button
               id="delete-deck-btn"
+              type="button"
               className="btn btn--small btn--danger btn--icon"
               onClick={handleDelete}
               title="Delete deck"
@@ -194,11 +196,12 @@ export function DeckSelector({
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             autoFocus
           />
-          <button id="create-deck-btn" className="btn btn--small" onClick={handleCreate}>
+          <button id="create-deck-btn" type="button" className="btn btn--small" onClick={handleCreate}>
             Create
           </button>
           <button
             id="cancel-deck-btn"
+            type="button"
             className="btn btn--small btn--ghost"
             onClick={() => { setIsCreating(false); setCreateError(null) }}
           >
@@ -221,10 +224,11 @@ export function DeckSelector({
             onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
             autoFocus
           />
-          <button id="save-deck-btn" className="btn btn--small btn--primary" onClick={handleSaveEdit}>
+          <button id="save-deck-btn" type="button" className="btn btn--small btn--primary" onClick={handleSaveEdit}>
             Save
           </button>
           <button
+            type="button"
             className="btn btn--small btn--ghost"
             onClick={() => { setIsEditing(false); setEditError(null) }}
           >

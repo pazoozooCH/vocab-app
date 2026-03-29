@@ -33,6 +33,7 @@ test.describe('Export flow', () => {
 
     // Accept navigation guard and go to export page
     page.on('dialog', (dialog) => dialog.accept())
+    await page.click('#nav-more')
     await page.click('#nav-export')
 
     // Should show 1 pending word

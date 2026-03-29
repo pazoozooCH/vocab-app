@@ -1379,14 +1379,15 @@ select:focus {
 }
 
 .highlight {
-  background: color-mix(in srgb, #facc15 35%, transparent);
+  background: color-mix(in srgb, #facc15 30%, transparent);
   border-radius: 2px;
   padding: 0 1px;
 }
 
 @media (prefers-color-scheme: dark) {
   .highlight {
-    background: color-mix(in srgb, #ca8a04 30%, transparent);
+    background: color-mix(in srgb, #facc15 25%, transparent);
+    color: #fff;
   }
 }
 

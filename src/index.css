@@ -60,6 +60,9 @@ body {
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
+  /* Account for system bars (Android nav bar, iOS notch) in PWA standalone mode */
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .top-bar {
@@ -167,7 +170,6 @@ body {
 .bottom-nav {
   flex-shrink: 0;
   height: var(--nav-height);
-  padding-bottom: env(safe-area-inset-bottom, 0);
   display: flex;
   align-items: center;
   justify-content: space-around;

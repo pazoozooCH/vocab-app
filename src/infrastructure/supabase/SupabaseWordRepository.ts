@@ -72,6 +72,17 @@ export class SupabaseWordRepository implements WordRepository {
     return toDomain(data)
   }
 
+  async findByIds(ids: string[], userId: string): Promise<Word[]> {
+    if (ids.length === 0) return []
+    const { data, error } = await this.client
+      .from('words')
+      .select()
+      .in('id', ids)
+      .eq('user_id', userId)
+    if (error) throw error
+    return (data ?? []).map(toDomain)
+  }
+
   async findByDeckId(deckId: string, userId: string): Promise<Word[]> {
     const { data, error } = await this.client
       .from('words')

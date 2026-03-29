@@ -4,11 +4,17 @@ import { renderMarkdown } from './renderMarkdown'
 interface WordRowProps {
   word: Word
   deckName?: string
+  showLanguage?: boolean
 }
 
-export function WordRow({ word, deckName }: WordRowProps) {
+export function WordRow({ word, deckName, showLanguage }: WordRowProps) {
   return (
     <div className="word-row">
+      {showLanguage && (
+        <span className={`badge badge--${word.language.toLowerCase()} badge--small`}>
+          {word.language}
+        </span>
+      )}
       <span className="word-row__word">{renderMarkdown(word.word)}</span>
       <span className="word-row__translations">
         {word.translations.map((t, i) => (

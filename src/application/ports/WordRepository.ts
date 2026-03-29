@@ -26,6 +26,7 @@ export interface WordPage {
 export interface WordRepository {
   save(word: Word): Promise<void>
   findById(id: string, userId: string): Promise<Word | null>
+  findByIds(ids: string[], userId: string): Promise<Word[]>
   findByDeckId(deckId: string, userId: string): Promise<Word[]>
   findPendingByDeckId(deckId: string, userId: string): Promise<Word[]>
   findAllByUser(userId: string): Promise<Word[]>

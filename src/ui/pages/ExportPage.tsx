@@ -48,16 +48,16 @@ export function ExportPage() {
     queryKey: ['exports', user?.id],
     queryFn: async () => {
       const exps = await exportRepository.findAllByUser(user!.id)
-      // Load words for each export in parallel
+      // Collect all unique word IDs across all exports and fetch in one batch
+      const allWordIds = [...new Set(exps.flatMap((e) => e.wordIds))]
+      const allWords = await wordRepository.findByIds(allWordIds, user!.id)
+      const wordById = new Map(allWords.map((w) => [w.id, w]))
       const wordsMap: Record<string, Word[]> = {}
-      await Promise.all(
-        exps.map(async (exp) => {
-          const words = await Promise.all(
-            exp.wordIds.map((id) => wordRepository.findById(id, user!.id)),
-          )
-          wordsMap[exp.id] = words.filter((w): w is Word => w !== null)
-        }),
-      )
+      for (const exp of exps) {
+        wordsMap[exp.id] = exp.wordIds
+          .map((id) => wordById.get(id))
+          .filter((w): w is Word => w !== undefined)
+      }
       return { exports: exps, exportWords: wordsMap }
     },
     enabled: !!user,

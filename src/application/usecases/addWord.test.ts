@@ -9,6 +9,7 @@ function createMockWordRepository(): WordRepository {
   return {
     save: vi.fn(),
     findById: vi.fn(),
+    findByIds: vi.fn().mockResolvedValue([]),
     findByDeckId: vi.fn(),
     findPendingByDeckId: vi.fn(),
     findAllByUser: vi.fn(),

@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import type { Export } from '../../domain/entities/Export'
 import type { Word } from '../../domain/entities/Word'
 import { ExportStatus } from '../../domain/values/ExportStatus'
 import { WordRow } from './WordRow'
+import { RelativeTime } from './RelativeTime'
 
 interface ExportCardProps {
   exp: Export
@@ -19,6 +21,7 @@ const statusLabels: Record<string, string> = {
 
 export function ExportCard({ exp, words, onConfirm, onFail, onDelete }: ExportCardProps) {
   const isPending = exp.status === ExportStatus.PendingConfirmation
+  const [showWords, setShowWords] = useState(false)
 
   return (
     <div className={`export-card export-card--${exp.status}`}>
@@ -31,20 +34,29 @@ export function ExportCard({ exp, words, onConfirm, onFail, onDelete }: ExportCa
           {' \u00b7 '}
           {exp.deckFilter || 'All decks'}
           {' \u00b7 '}
-          {exp.createdAt.toLocaleString()}
+          <RelativeTime date={exp.createdAt} />
         </span>
       </div>
 
-      <div className="export-card__words">
-        {words.map((w) => (
-          <WordRow key={w.id} word={w} />
-        ))}
-        {words.length < exp.wordCount && (
-          <div className="export-card__missing">
-            {exp.wordCount - words.length} word{exp.wordCount - words.length !== 1 ? 's' : ''} no longer available
-          </div>
-        )}
-      </div>
+      <button
+        className="export-card__toggle"
+        onClick={() => setShowWords((v) => !v)}
+      >
+        {showWords ? 'Hide words' : 'Show words'}
+      </button>
+
+      {showWords && (
+        <div className="export-card__words">
+          {words.map((w) => (
+            <WordRow key={w.id} word={w} showLanguage />
+          ))}
+          {words.length < exp.wordCount && (
+            <div className="export-card__missing">
+              {exp.wordCount - words.length} word{exp.wordCount - words.length !== 1 ? 's' : ''} no longer available
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="export-card__actions">
         {isPending && (

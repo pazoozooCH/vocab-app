@@ -674,6 +674,11 @@ select:focus {
   color: var(--color-exported);
 }
 
+.badge--small {
+  font-size: 0.625rem;
+  padding: 1px 5px;
+}
+
 /* Word List Page */
 
 .word-list-page {
@@ -846,6 +851,21 @@ select:focus {
 .export-card__meta {
   font-size: 0.75rem;
   color: var(--color-text-muted);
+}
+
+.export-card__toggle {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 4px 0;
+}
+
+.export-card__toggle:hover {
+  color: var(--color-primary);
 }
 
 .export-card__words {

@@ -51,7 +51,7 @@ export function ExpandableWordRow({
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && setExpanded(true)}
     >
-      <WordRow word={word} deckName={deckName} />
+      <WordRow word={word} deckName={deckName} showLanguage />
     </div>
   )
 }

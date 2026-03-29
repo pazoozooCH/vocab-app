@@ -506,6 +506,12 @@ select:focus {
   margin-bottom: 2px;
 }
 
+.word-card__sentence-divider {
+  border-top: 1px dashed var(--color-border);
+  margin: 6px 0;
+  opacity: 0.5;
+}
+
 .word-card__meta {
   display: flex;
   align-items: center;

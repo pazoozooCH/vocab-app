@@ -49,6 +49,7 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
         {word.sentencesSource.map((s, i) => (
           <div key={`src-${i}`} className="word-card__sentence">{renderMarkdown(s)}</div>
         ))}
+        <div className="word-card__sentence-divider" />
         {word.sentencesGerman.map((s, i) => (
           <div key={`de-${i}`} className="word-card__sentence">{renderMarkdown(s)}</div>
         ))}

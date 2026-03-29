@@ -261,9 +261,7 @@ function ImportPreview({
         </div>
       </div>
 
-      {summary.newDecks.length > 0 && (
-        <DeckBreakdown categorized={analysis.categorized} newDecks={summary.newDecks} />
-      )}
+      <DeckBreakdown categorized={analysis.categorized} newDecks={summary.newDecks} />
 
       {summary.skippedDecks.length > 0 && (
         <div className="import-preview__section">
@@ -294,9 +292,9 @@ function ImportPreview({
 }
 
 function DeckBreakdown({ categorized, newDecks }: { categorized: CategorizedNote[]; newDecks: string[] }) {
+  // Count categories per deck — all decks, not just new ones
   const deckStats = new Map<string, { new: number; updated: number; unchanged: number }>()
   for (const { note, category } of categorized) {
-    if (!newDecks.includes(note.deckName)) continue
     let stats = deckStats.get(note.deckName)
     if (!stats) {
       stats = { new: 0, updated: 0, unchanged: 0 }
@@ -307,17 +305,21 @@ function DeckBreakdown({ categorized, newDecks }: { categorized: CategorizedNote
     else if (category === 'unchanged') stats.unchanged++
   }
 
+  // Include parent-only new decks (no direct notes)
   for (const name of newDecks) {
     if (!deckStats.has(name)) {
       deckStats.set(name, { new: 0, updated: 0, unchanged: 0 })
     }
   }
 
+  const newDeckSet = new Set(newDecks)
   const sorted = [...deckStats.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+
+  if (sorted.length === 0) return null
 
   return (
     <div className="import-preview__section">
-      <h3>New decks ({newDecks.length})</h3>
+      <h3>By deck ({sorted.length})</h3>
       <div className="import-preview__table">
         <div className="import-preview__row import-preview__row--header">
           <span>Deck</span>
@@ -329,9 +331,13 @@ function DeckBreakdown({ categorized, newDecks }: { categorized: CategorizedNote
         </div>
         {sorted.map(([name, stats]) => {
           const total = stats.new + stats.updated + stats.unchanged
+          const isNew = newDeckSet.has(name)
           return (
             <div key={name} className="import-preview__row">
-              <span className="import-preview__deck-name">{name}</span>
+              <span className="import-preview__deck-name">
+                {name}
+                {isNew && <span className="import-preview__new-badge">new</span>}
+              </span>
               {total > 0 ? (
                 <span className="import-preview__row-counts">
                   <span className="import-preview__count--new">{stats.new}</span>

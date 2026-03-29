@@ -3,6 +3,7 @@ import type { Word } from '../../domain/entities/Word'
 import { renderMarkdown } from './renderMarkdown'
 import { WordRow } from './WordRow'
 import { RelativeTime } from './RelativeTime'
+import { TruncatedDeckName } from './TruncatedDeckName'
 
 interface WordCardProps {
   word: Word
@@ -58,7 +59,7 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
 
       <div className="word-card__meta">
         <span className="word-card__info">
-          {deckName && <span className="word-card__deck">{deckName}</span>}
+          {deckName && <TruncatedDeckName name={deckName} />}
           <span className="word-card__time"><RelativeTime date={word.createdAt} /></span>
         </span>
         <div className="word-card__actions">

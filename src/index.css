@@ -516,6 +516,7 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-top: 8px;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
@@ -525,10 +526,20 @@ select:focus {
   display: flex;
   gap: 8px;
   align-items: center;
+  min-width: 0;
+}
+
+.word-card__deck {
+  white-space: nowrap;
 }
 
 .word-card__time {
   opacity: 0.6;
+  white-space: nowrap;
+}
+
+.relative-time {
+  cursor: pointer;
 }
 
 .word-card__actions {

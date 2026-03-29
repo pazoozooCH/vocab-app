@@ -23,6 +23,7 @@ interface RelativeTimeProps {
 
 export function RelativeTime({ date }: RelativeTimeProps) {
   const [, setTick] = useState(0)
+  const [showFull, setShowFull] = useState(false)
 
   useEffect(() => {
     const { refreshIn } = formatRelative(date)
@@ -31,5 +32,14 @@ export function RelativeTime({ date }: RelativeTimeProps) {
   })
 
   const { text } = formatRelative(date)
-  return <span title={date.toLocaleString()}>{text}</span>
+
+  return (
+    <span
+      title={date.toLocaleString()}
+      onClick={() => setShowFull((v) => !v)}
+      className="relative-time"
+    >
+      {showFull ? date.toLocaleString() : text}
+    </span>
+  )
 }

@@ -6,8 +6,22 @@ Import existing Anki cards into the Vocab app for duplicate detection and vocabu
 
 - Import words from an Anki `.apkg` export so they appear in the word list
 - Detect duplicates when adding new words via the AI translation flow
-- Imported words are read-only references — they were created in Anki, not in the app
-- Support re-importing without creating duplicates
+- Support re-importing: new words are added, changed words are updated, identical words are skipped
+- Sync back changes made to our own exported words in Anki
+
+## Scope
+
+### Included
+
+- Decks under `English` and `Français` (and their sub-decks)
+- Note types: Basic, Basic (and reversed card), Einfach (beide Richtungen), French Word, Vocab (reversed)
+- Our own "Vocab (reversed)" notes: compare with existing data, update if changed
+
+### Excluded
+
+- Decks not under `English` or `Français` (e.g. `C1-C2 German-English`)
+- Media files (audio, images)
+- Anki scheduling data (review history, intervals)
 
 ## Data Analysis
 
@@ -20,7 +34,7 @@ Analyzed from user's Anki export (March 2026, ~10,000 cards).
 | 1727109230785 | Basic (and reversed card) | 4,091 | EN + FR | Yes |
 | 1459520588346 | Einfach (beide Richtungen) | 673 | EN | Yes |
 | 1683059128297 | French Word | 5,000 | FR | Yes |
-| 1607392319100 | Vocab (reversed) | 85 | — | **Skip** (our own exports, have VocabID) |
+| 1607392319100 | Vocab (reversed) | 85 | — | Yes (sync back) |
 | 1727109230784 | Basic | 8 | EN | Yes |
 
 ### Field Structures
@@ -66,27 +80,31 @@ Parsing:
 
 Sentence format in field 7:
 ```
+Vive *la* politique, vive *l'*amour.
+Es lebe *die* Politik, es lebe *die* Liebe.
+
 *Le* chien de mon voisin aboie toute la nuit.
 *Der* Hund meines Nachbarn bellt die ganze Nacht.
-
-Elle *l'*aime depuis leur première rencontre.
-Sie liebt *ihn* seit ihrer ersten Begegnung.
 ```
 
 Parsing:
 1. Split by double newline (`\n\n`) → sentence pairs
 2. Each pair: first line = French, second line = German
-3. `*word*` marks bold vocabulary words → convert to `**word**` (our markdown format)
-4. Limit to 2-3 sentence pairs (some words have 50+)
+3. `*word*` marks bold → convert to `**word**` (our markdown format)
+4. Limit to 3 sentence pairs (some words have 50+)
 
-#### Vocab (reversed) — Skip
+#### Vocab (reversed) — Sync Back
 
-Our own exports. Field 2 contains VocabID (UUID). Skip these entirely during import to avoid circular re-import.
+Our own exports. Field 2 contains VocabID (UUID).
+- Match by VocabID to find the corresponding word in our DB
+- Compare fields: if Front/Back changed in Anki, update our word
+- If VocabID not found in our DB, treat as new import
 
 ### Deck Structure
 
 Decks use `\x1f` as hierarchy separator (displayed as `::` in Anki UI).
 
+Relevant decks:
 ```
 English
 English\x1f1. Games
@@ -101,131 +119,152 @@ Français\x1f1 Personelle\x1f1b. Comics
 Français\x1fFranzösisch 5000
 Français\x1fFranzösisch 5000\x1f1. FR → DE
 Français\x1fFranzösisch 5000\x1f2. DE → FR
-C1-C2 German-English (audioacademy.eu)
 ```
 
-**Important**: French Word notes have cards in **two** sub-decks (`FR → DE` and `DE → FR`). Each note produces 2 cards in different decks. Import the **note** once, not each card.
+**Important**: French Word notes have cards in **two** sub-decks (`FR → DE` and `DE → FR`). Each note produces 2 cards in different decks. Import the **note** once, not each card. Use the parent deck (`Français::Französisch 5000`) for assignment.
 
 ### Language Detection
 
-Determine language from the **top-level** deck name of the card:
+From the **top-level** deck name of the card:
 - `English*` → EN
 - `Français*` → FR
-- `C1-C2 German-English*` → EN
-- Unknown → prompt user during import
+
+Convert Anki `\x1f` separator to `::` for our deck names.
 
 ## Database Changes
 
 ### New WordStatus value
 
-Add `imported` to the `WordStatus` enum:
+Add `imported` to the allowed values:
 - `pending` — added via the app, not yet exported
 - `exported` — added via the app, exported to Anki
-- `imported` — imported from Anki, read-only reference
+- `imported` — imported from Anki
 
-Migration: update the CHECK constraint on `words.status` to allow `'imported'`.
+Migration: update CHECK constraint on `words.status` to include `'imported'`.
 
 ### New column: `anki_guid`
 
 Add `anki_guid text` column to `words` table:
-- Nullable (only set for imported words)
-- Unique per user (prevents duplicate imports)
+- Nullable (only set for imported words and our exported words synced back)
+- Unique per user: `UNIQUE(user_id, anki_guid)` prevents duplicate imports
 - Stores the Anki note `guid` (e.g. `B[LorXuOhh`)
 
-Migration: `ALTER TABLE words ADD COLUMN anki_guid text`, add unique index on `(user_id, anki_guid)`.
+For our own "Vocab (reversed)" notes: the VocabID field contains our word UUID, so we match by that instead of guid. But we still store the guid for completeness.
 
-### Deck mapping
+### Deck auto-creation
 
-Imported words need a deck. Options:
-1. **Create decks automatically** from the Anki deck hierarchy
-2. **Let user select** a target deck during import
-3. **Map Anki decks** to existing Vocab decks
+Imported words need decks. Auto-create decks from the Anki hierarchy:
+- `English\x1f1. Games` → create deck `English::1. Games` with language EN
+- Reuse existing decks if they match by name and language
 
-Recommendation: **Option 1** — auto-create decks matching the Anki hierarchy. The user can rename/reorganize after import. Use the top-level deck for language detection, and the most specific (leaf) deck for assignment.
+## Import Flow (UX)
+
+### Step 1: Upload
+
+User uploads an `.apkg` file on the Import page.
+
+### Step 2: Analysis & Preview
+
+Parse the file client-side and show a summary:
+
+```
+Import Analysis
+───────────────
+Decks found: 12 (importing 8 under English/Français)
+Skipped decks: 4 (C1-C2 German-English, ...)
+
+Notes found: 9,857
+  ├── New words: 8,200 (will be added)
+  ├── Unchanged: 1,500 (will be skipped)
+  ├── Updated: 72 (will be updated)
+  └── Vocab sync: 85 (our exports, 3 changed)
+
+By language:
+  🇬🇧 English: 4,772
+  🇫🇷 French: 5,085
+
+By note type:
+  Basic (and reversed card): 4,091
+  French Word: 5,000
+  Einfach (beide Richtungen): 673
+  Vocab (reversed): 85
+  Basic: 8
+```
+
+Optionally expand to see sample words per category.
+
+### Step 3: Confirm or Cancel
+
+User reviews the summary and clicks "Import" or "Cancel".
+
+### Step 4: Import Execution
+
+1. Create decks that don't exist yet
+2. Batch insert new words (status: `imported`)
+3. Batch update changed words
+4. Skip unchanged words
+5. For Vocab (reversed) notes: match by VocabID, update if changed
+6. Show final summary: X added, Y updated, Z skipped
 
 ## Implementation Plan
 
 ### Phase 1: Parser (`src/infrastructure/anki/parseApkg.ts`)
 
-Client-side `.apkg` parser using sql.js:
-1. Read ZIP → extract `collection.anki21b` (zstd) or `collection.anki2` (SQLite)
-2. Query `notetypes`, `fields`, `notes`, `cards`, `decks`
-3. For each note:
-   - Determine note type and parse fields accordingly
-   - Determine language from card's deck
-   - Extract: word, translations, source sentences, German sentences
-   - Store Anki guid for dedup
-4. Return a list of parsed words with metadata
+Client-side `.apkg` parser:
+1. Read ZIP → extract `collection.anki21b` (zstd-compressed) using `fzstd` library
+2. Open SQLite via sql.js
+3. Query notes, cards, decks, notetypes, fields
+4. For each note: parse fields, determine language, extract word data
+5. Return structured import data
 
-**Challenge**: `collection.anki21b` is zstd-compressed. Browser doesn't have native zstd. Options:
-- Use `collection.anki2` (legacy format, always present) — simpler
-- Add a zstd WASM library — more complex
+**Dependency**: `fzstd` (small, pure JS zstd decompressor, ~15KB) — needed because `collection.anki2` is a stub in modern Anki exports.
 
-Recommendation: use `collection.anki2` for now. It contains the same notes/cards data in the old JSON-in-col format.
+### Phase 2: Analysis Engine
 
-Actually, from analysis: `collection.anki2` only has a stub "please update" message in newer exports. The real data is only in `collection.anki21b`. We'll need a zstd decompression library (e.g. `fzstd` — small, no WASM).
+Compare parsed data with existing DB:
+1. Fetch all existing `anki_guid` values for the user
+2. Fetch all existing words with VocabID (for sync-back)
+3. Categorize each note: new / unchanged / updated / vocab-sync
+4. Build the summary statistics
 
-### Phase 2: Import Preview UI
+### Phase 3: Import UI
 
-New page or modal accessible from the word list or a dedicated nav item:
-1. File upload (`.apkg` file)
-2. Parse and show summary: X notes found, Y decks, Z already imported
-3. Let user select which decks to import (checkboxes)
-4. Show preview of first few words per deck
-5. "Import" button
+- Accessible from the word list page via an "Import" button, or from top bar
+- File upload → analysis → preview → confirm/cancel → progress → done
+- Show progress during import (X of Y)
 
-### Phase 3: Import Execution
+### Phase 4: Import Execution
 
-1. Create decks that don't exist yet
-2. For each word:
-   - Check if `anki_guid` already exists → skip
-   - Create Word entity with status `imported`
-   - Save to DB
-3. Show summary: X imported, Y skipped (duplicates), Z failed
+- Batch operations for performance (not one-by-one)
+- Create missing decks first
+- Insert new words in batches
+- Update changed words in batches
+- Report results
 
-### Phase 4: Duplicate Detection Integration
+## Capacity & Performance
 
-The existing `findDuplicates` method already checks by word text. Imported words will naturally appear as duplicates when adding new words via the AI flow.
+### Supabase Free Tier
 
-No code changes needed — just having the imported words in the DB is sufficient.
+- 500 MB database storage — ~10k words ≈ 5-10 MB (well within limits)
+- No row count limits
+- API rate limits: generous for batch operations
 
-## HTML Parsing Details
+### App Performance
 
-### Extracting word and sentences from Basic format
+- Server-side pagination already implemented (30 words per page)
+- Search uses server-side ILIKE + client-side sentence search
+- Infinite scroll handles large lists
+- No performance issues expected with 10k+ words
 
-```
-Input:  "abonder<br><ol><li>Les erreurs abondent dans ce texte.<br></li></ol>"
-Output: { word: "abonder", sentences: ["Les erreurs abondent dans ce texte."] }
-```
+### Import Performance
 
-Steps:
-1. Split on `<br>` (first occurrence) → word part + rest
-2. Strip HTML from word part → plain text word
-3. Find all `<li>` content via regex → sentence array
-4. Strip `<br>` and other HTML from sentences
-5. Handle edge case: no `<br>` or `<ol>` → word only, no sentences
-
-### Extracting from French Word format
-
-```
-Field[2]: "le"               → word (with article)
-Field[6]: "[bestimmter Artikel], ihn/sie/es"  → translations (comma-separated)
-Field[7]: "Vive *la* politique...\nEs lebe *die* Politik...\n\n..."
-          → sentence pairs split by \n\n, convert *word* to **word**
-```
-
-Steps:
-1. Word: use field[2] ("Wort mit Artikel"), fallback to field[1]
-2. Translations: split field[6] by `, ` or `,`
-3. Sentences: split field[7] by `\n\n`, take first 3 pairs
-4. Each pair: line 1 = source (FR), line 2 = German
-5. Convert `*text*` → `**text**` for our bold format
+- Client-side parsing: sql.js + zstd should handle 30 MB SQLite in seconds
+- DB inserts: batch insert (e.g. 100 rows per request) for ~50 requests total
+- Expected total import time: 10-30 seconds
 
 ## Open Questions
 
-1. **Import page location**: new tab in bottom nav, or accessible from word list page via a button?
-2. **Re-import behavior**: when re-importing an updated Anki export, should we update existing imported words or only add new ones?
-3. **Sentence limit**: how many sentences to import for French Word notes? Suggest 3.
-4. **Deck mapping for "Einfach" notes**: these are German-fronted (DE→EN). Should we flip them so the English word is the "source"?
-5. **C1-C2 German-English deck**: this is a third-party deck. Import or skip?
-6. **collection.anki2 vs anki21b**: need to verify if collection.anki2 has real data or just a stub in the user's export version.
+1. **Import page location**: button on word list page, or top bar link like Stats?
+2. **"Einfach" notes are German-fronted** (DE→EN): flip so English is the "source word"? Or import as-is with German as source?
+3. **Sentence limit**: 3 sentences per word for French Word notes — confirm?
+4. **collection.anki2 vs anki21b**: confirmed that anki2 is a stub. Need `fzstd` for zstd decompression.

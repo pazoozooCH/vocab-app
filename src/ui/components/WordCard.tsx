@@ -9,11 +9,12 @@ interface WordCardProps {
   word: Word
   deckName?: string
   duplicates?: Word[]
+  highlight?: string
   onDelete?: (word: Word) => void
   onRefine?: (word: Word, context: string) => Promise<void>
 }
 
-export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: WordCardProps) {
+export function WordCard({ word, deckName, duplicates, highlight, onDelete, onRefine }: WordCardProps) {
   const [isRefining, setIsRefining] = useState(false)
   const [context, setContext] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,7 +35,7 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
   return (
     <div className="word-card">
       <div className="word-card__header">
-        <span className="word-card__word">{renderMarkdown(word.word)}</span>
+        <span className="word-card__word">{renderMarkdown(word.word, highlight)}</span>
         <span className={`badge badge--${word.language.toLowerCase()}`}>
           {word.language}
         </span>
@@ -43,17 +44,17 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
 
       <div className="word-card__translations">
         {word.translations.map((t, i) => (
-          <span key={i}>{i > 0 && ', '}{renderMarkdown(t)}</span>
+          <span key={i}>{i > 0 && ', '}{renderMarkdown(t, highlight)}</span>
         ))}
       </div>
 
       <div className="word-card__sentences">
         {word.sentencesSource.map((s, i) => (
-          <div key={`src-${i}`} className="word-card__sentence">{renderMarkdown(s)}</div>
+          <div key={`src-${i}`} className="word-card__sentence">{renderMarkdown(s, highlight)}</div>
         ))}
         <div className="word-card__sentence-divider" />
         {word.sentencesGerman.map((s, i) => (
-          <div key={`de-${i}`} className="word-card__sentence">{renderMarkdown(s)}</div>
+          <div key={`de-${i}`} className="word-card__sentence">{renderMarkdown(s, highlight)}</div>
         ))}
       </div>
 
@@ -65,6 +66,7 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
         <div className="word-card__actions">
           {duplicates && duplicates.length > 0 && (
             <button
+              type="button"
               className="btn btn--small btn--warn"
               onClick={() => setShowDuplicates(!showDuplicates)}
             >
@@ -74,6 +76,7 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
           {onRefine && !isRefining && (
             <button
               id="refine-btn"
+              type="button"
               className="btn btn--small"
               onClick={() => setIsRefining(true)}
             >
@@ -82,6 +85,7 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
           )}
           {onDelete && (
             <button
+              type="button"
               className="btn btn--small btn--danger"
               onClick={() => onDelete(word)}
             >
@@ -114,13 +118,15 @@ export function WordCard({ word, deckName, duplicates, onDelete, onRefine }: Wor
           />
           <button
             id="refine-submit-btn"
+            type="button"
             className="btn btn--small btn--primary"
             onClick={handleRefine}
             disabled={loading || !context.trim()}
           >
-            {loading ? 'Refining…' : 'Go'}
+            {loading ? 'Refining...' : 'Go'}
           </button>
           <button
+            type="button"
             className="btn btn--small btn--ghost"
             onClick={() => { setIsRefining(false); setContext('') }}
           >

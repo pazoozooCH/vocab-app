@@ -8,6 +8,7 @@ interface ExpandableWordRowProps {
   deckName?: string
   defaultExpanded?: boolean
   duplicates?: Word[]
+  highlight?: string
   onDelete?: (word: Word) => void
   onRefine?: (word: Word, context: string) => Promise<void>
 }
@@ -17,6 +18,7 @@ export function ExpandableWordRow({
   deckName,
   defaultExpanded = false,
   duplicates,
+  highlight,
   onDelete,
   onRefine,
 }: ExpandableWordRowProps) {
@@ -36,6 +38,7 @@ export function ExpandableWordRow({
           word={word}
           deckName={deckName}
           duplicates={duplicates}
+          highlight={highlight}
           onDelete={onDelete}
           onRefine={onRefine}
         />
@@ -51,7 +54,7 @@ export function ExpandableWordRow({
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && setExpanded(true)}
     >
-      <WordRow word={word} deckName={deckName} showLanguage />
+      <WordRow word={word} deckName={deckName} showLanguage highlight={highlight} />
     </div>
   )
 }

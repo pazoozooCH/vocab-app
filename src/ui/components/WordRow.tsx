@@ -5,9 +5,10 @@ interface WordRowProps {
   word: Word
   deckName?: string
   showLanguage?: boolean
+  highlight?: string
 }
 
-export function WordRow({ word, deckName, showLanguage }: WordRowProps) {
+export function WordRow({ word, deckName, showLanguage, highlight }: WordRowProps) {
   return (
     <div className="word-row">
       {showLanguage && (
@@ -15,10 +16,10 @@ export function WordRow({ word, deckName, showLanguage }: WordRowProps) {
           {word.language}
         </span>
       )}
-      <span className="word-row__word">{renderMarkdown(word.word)}</span>
+      <span className="word-row__word">{renderMarkdown(word.word, highlight)}</span>
       <span className="word-row__translations">
         {word.translations.map((t, i) => (
-          <span key={i}>{i > 0 && ', '}{renderMarkdown(t)}</span>
+          <span key={i}>{i > 0 && ', '}{renderMarkdown(t, highlight)}</span>
         ))}
       </span>
       {deckName && <span className="word-row__deck">{deckName}</span>}

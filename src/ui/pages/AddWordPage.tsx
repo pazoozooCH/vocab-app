@@ -4,6 +4,7 @@ import { Word } from '../../domain/entities/Word'
 import { addWord } from '../../application/usecases/addWord'
 import { useAuth, useServices } from '../context/AppContext'
 import { useDecks } from '../hooks/useDecks'
+import { useWords } from '../hooks/useWords'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { DeckSelector } from '../components/DeckSelector'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
@@ -27,6 +28,24 @@ export function AddWordPage() {
   const [results, setResults] = useState<Word[]>([])
   const [duplicatesMap, setDuplicatesMap] = useState<Record<string, Word[]>>({})
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null)
+
+  // Live duplicate search — debounced, min 3 chars
+  const [debouncedWord, setDebouncedWord] = useState('')
+  const [showLiveDupes, setShowLiveDupes] = useState(false)
+  useEffect(() => {
+    const trimmed = word.trim()
+    if (trimmed.length < 3) {
+      setDebouncedWord('')
+      return
+    }
+    const timer = setTimeout(() => setDebouncedWord(trimmed), 300)
+    return () => clearTimeout(timer)
+  }, [word])
+
+  const { words: liveDuplicates, total: liveDupeTotal } = useWords({
+    search: debouncedWord || undefined,
+    language,
+  })
 
   // Set navigation guard when there are results or an active import
   const shouldBlock = results.length > 0 || isLoading
@@ -205,6 +224,30 @@ export function AddWordPage() {
               autoFocus
               disabled={isLoading}
             />
+            {debouncedWord && liveDupeTotal > 0 && (
+              <div className="live-duplicates" id="live-duplicates">
+                <button
+                  type="button"
+                  className="live-duplicates__toggle"
+                  onClick={() => setShowLiveDupes(!showLiveDupes)}
+                >
+                  {liveDupeTotal} existing word{liveDupeTotal !== 1 ? 's' : ''} matching "{debouncedWord}"
+                  <span className="live-duplicates__arrow">{showLiveDupes ? '\u25B2' : '\u25BC'}</span>
+                </button>
+                {showLiveDupes && (
+                  <div className="live-duplicates__list">
+                    {liveDuplicates.map((w) => (
+                      <ExpandableWordRow
+                        key={w.id}
+                        word={w}
+                        deckName={getDeckName(w.deckId, decks)}
+                        highlight={debouncedWord}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <button
               id="mode-batch"
               type="button"

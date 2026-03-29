@@ -154,6 +154,13 @@ export function WordListPage() {
           >
             Exported
           </button>
+          <button
+            id="filter-imported"
+            className={`status-filter__btn ${status === WordStatusEnum.Imported ? 'status-filter__btn--active' : ''}`}
+            onClick={() => setStatus(WordStatusEnum.Imported)}
+          >
+            Imported
+          </button>
         </div>
 
         <div className="search-filter">
@@ -204,7 +211,7 @@ export function WordListPage() {
             {debouncedSearch && ` matching "${debouncedSearch}"`}
           </div>
           {words.map((w) => (
-            <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} onDelete={handleDelete} onRefine={w.status === WordStatusValues.Pending ? handleRefine : undefined} />
+            <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} highlight={debouncedSearch} onDelete={handleDelete} onRefine={w.status === WordStatusValues.Pending ? handleRefine : undefined} />
           ))}
           {hasMore && (
             <div ref={sentinelRef} className="word-list__loading">

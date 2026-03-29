@@ -9,7 +9,8 @@ import { usePersistedState } from '../hooks/usePersistedState'
 import type { WordSortField, WordSortDirection } from '../../application/ports/WordRepository'
 import { ExpandableWordRow } from '../components/ExpandableWordRow'
 import { getDeckName } from '../hooks/useDeckName'
-import type { Word } from '../../domain/entities/Word'
+import { Word } from '../../domain/entities/Word'
+import { WordStatus as WordStatusValues } from '../../domain/values/WordStatus'
 
 // Filter values: '' = all, 'EN' = all English, 'FR' = all French, 'deck:<id>' = specific deck
 type DeckFilter = string
@@ -23,7 +24,7 @@ function parseDeckFilter(filter: DeckFilter): { deckId?: string; language?: Lang
 
 export function WordListPage() {
   const { user } = useAuth()
-  const { wordRepository } = useServices()
+  const { wordRepository, translationService } = useServices()
   const { decks } = useDecks()
   const [deckFilter, setDeckFilter] = usePersistedState<DeckFilter>('wordList.deck', '')
   const [status, setStatus] = useState<WordStatus | ''>('')
@@ -92,6 +93,31 @@ export function WordListPage() {
     if (!user) return
     if (!confirm(`Delete "${word.word}"?`)) return
     await wordRepository.delete(word.id, user.id)
+    reload()
+  }
+
+  const handleRefine = async (originalWord: Word, context: string) => {
+    if (!user) return
+    const bareWord = originalWord.word.replace(/\s*_\[.*?\]_$/, '')
+    const translation = await translationService.translate(
+      bareWord,
+      originalWord.language,
+      context,
+    )
+    const refined = Word.create({
+      id: originalWord.id,
+      userId: originalWord.userId,
+      word: translation.word ?? bareWord,
+      language: originalWord.language,
+      translations: translation.translations,
+      sentencesSource: translation.sentencesSource,
+      sentencesGerman: translation.sentencesGerman,
+      deckId: originalWord.deckId,
+      status: originalWord.status as typeof WordStatusValues.Pending | typeof WordStatusValues.Exported,
+      createdAt: originalWord.createdAt,
+      exportedAt: originalWord.exportedAt,
+    })
+    await wordRepository.update(refined)
     reload()
   }
 
@@ -195,7 +221,7 @@ export function WordListPage() {
             {debouncedSearch && ` matching "${debouncedSearch}"`}
           </div>
           {words.map((w) => (
-            <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} onDelete={handleDelete} />
+            <ExpandableWordRow key={w.id} word={w} deckName={getDeckName(w.deckId, decks)} onDelete={handleDelete} onRefine={w.status === WordStatusValues.Pending ? handleRefine : undefined} />
           ))}
           {hasMore && (
             <div ref={sentinelRef} className="word-list__loading">

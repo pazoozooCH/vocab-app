@@ -45,13 +45,12 @@ export async function confirmExport(
   const exp = await deps.exportRepository.findById(exportId, userId)
   if (!exp) throw new Error('Export not found')
 
-  const now = new Date()
-  for (const wordId of exp.wordIds) {
-    const word = await deps.wordRepository.findById(wordId, userId)
-    if (word) {
-      await deps.wordRepository.update(word.markExported(now))
-    }
-  }
+  // Single batch update instead of individual fetch + update per word
+  await deps.wordRepository.markExportedBatch(
+    [...exp.wordIds],
+    userId,
+    new Date(),
+  )
 
   await deps.exportRepository.update(exp.withStatus(ExportStatus.Confirmed))
 }

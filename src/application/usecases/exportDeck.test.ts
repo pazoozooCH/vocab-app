@@ -42,6 +42,7 @@ function createMockWordRepository(): WordRepository {
     findPendingByDeckId: vi.fn(),
     findAllByUser: vi.fn(),
     findPaginated: vi.fn().mockResolvedValue({ words: [], total: 0, hasMore: false }),
+    markExportedBatch: vi.fn(),
     findDuplicates: vi.fn().mockResolvedValue([]),
     update: vi.fn(),
     delete: vi.fn(),
@@ -76,21 +77,24 @@ describe('confirmExport', () => {
       wordCount: 1,
       createdAt: new Date(),
     })
-    const word = makeWord({ id: 'w1' })
-
     const exportRepo = createMockExportRepository()
     const wordRepo = createMockWordRepository()
     vi.mocked(exportRepo.findById).mockResolvedValue(exp)
-    vi.mocked(wordRepo.findById).mockResolvedValue(word)
 
     await confirmExport('exp-1', 'user-123', {
       exportRepository: exportRepo,
       wordRepository: wordRepo,
     })
 
-    expect(wordRepo.update).toHaveBeenCalledOnce()
-    const updatedWord = vi.mocked(wordRepo.update).mock.calls[0][0]
-    expect(updatedWord.status).toBe(WordStatus.Exported)
+    // Should use batch update, not individual updates
+    expect(wordRepo.markExportedBatch).toHaveBeenCalledOnce()
+    expect(wordRepo.markExportedBatch).toHaveBeenCalledWith(
+      ['w1'],
+      'user-123',
+      expect.any(Date),
+    )
+    expect(wordRepo.update).not.toHaveBeenCalled()
+    expect(wordRepo.findById).not.toHaveBeenCalled()
 
     expect(exportRepo.update).toHaveBeenCalledOnce()
     const updatedExport = vi.mocked(exportRepo.update).mock.calls[0][0]

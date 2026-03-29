@@ -179,6 +179,32 @@ describe('SupabaseWordRepository', () => {
     expect(result.words).toHaveLength(2)
   })
 
+  it('markExportedBatch updates multiple words in a single operation', async () => {
+    const w1 = makeWord({ word: 'hello' })
+    const w2 = makeWord({ word: 'goodbye' })
+    const w3 = makeWord({ word: 'thanks' })
+    await wordRepo.save(w1)
+    await wordRepo.save(w2)
+    await wordRepo.save(w3)
+
+    // Batch-mark only w1 and w2 as exported
+    const exportedAt = new Date('2026-03-29')
+    await wordRepo.markExportedBatch([w1.id, w2.id], TEST_USER_ID, exportedAt)
+
+    const found1 = await wordRepo.findById(w1.id, TEST_USER_ID)
+    expect(found1!.status).toBe(WordStatus.Exported)
+    expect(found1!.exportedAt).toEqual(exportedAt)
+
+    const found2 = await wordRepo.findById(w2.id, TEST_USER_ID)
+    expect(found2!.status).toBe(WordStatus.Exported)
+    expect(found2!.exportedAt).toEqual(exportedAt)
+
+    // w3 should remain pending
+    const found3 = await wordRepo.findById(w3.id, TEST_USER_ID)
+    expect(found3!.status).toBe(WordStatus.Pending)
+    expect(found3!.exportedAt).toBeNull()
+  })
+
   it('cascade deletes words when deck is deleted', async () => {
     await wordRepo.save(makeWord({ word: 'hello', deckId: enDeckId }))
     await wordRepo.save(makeWord({ word: 'world', deckId: enDeckId }))

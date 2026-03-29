@@ -198,6 +198,18 @@ export class SupabaseWordRepository implements WordRepository {
     return data.map(toDomain)
   }
 
+  async markExportedBatch(wordIds: string[], userId: string, exportedAt: Date): Promise<void> {
+    const { error } = await this.client
+      .from('words')
+      .update({
+        status: 'exported',
+        exported_at: exportedAt.toISOString(),
+      })
+      .in('id', wordIds)
+      .eq('user_id', userId)
+    if (error) throw error
+  }
+
   async update(word: Word): Promise<void> {
     const { error } = await this.client
       .from('words')

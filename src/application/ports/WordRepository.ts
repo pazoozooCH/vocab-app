@@ -31,6 +31,7 @@ export interface WordRepository {
   findAllByUser(userId: string): Promise<Word[]>
   findPaginated(userId: string, params: WordSearchParams): Promise<WordPage>
   findDuplicates(word: string, language: Language, userId: string, excludeId?: string): Promise<Word[]>
+  markExportedBatch(wordIds: string[], userId: string, exportedAt: Date): Promise<void>
   update(word: Word): Promise<void>
   delete(id: string, userId: string): Promise<void>
 }

@@ -8,6 +8,7 @@ import { AddWordPage } from './ui/pages/AddWordPage'
 import { WordListPage } from './ui/pages/WordListPage'
 import { ExportPage } from './ui/pages/ExportPage'
 import { StatsPage } from './ui/pages/StatsPage'
+import { ImportPage } from './ui/pages/ImportPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +31,7 @@ export default function App() {
                 <Route path="/" element={<AddWordPage />} />
                 <Route path="/words" element={<WordListPage />} />
                 <Route path="/export" element={<ExportPage />} />
+                <Route path="/import" element={<ImportPage />} />
                 <Route path="/stats" element={<StatsPage />} />
               </Route>
             </Route>

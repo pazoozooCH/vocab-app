@@ -72,7 +72,7 @@ Rules:
 - Generate 2-3 sample sentences in ${sourceLang} and their German translations
 - Number each sentence with an ordinal prefix (1., 2., 3.)
 - Bold the vocabulary word in each sentence using **markdown bold**
-- Use natural, everyday sentences${language === 'FR' ? '\n- French words must always include their article (un/une, le/la)' : ''}
+- Use natural, everyday sentences${language === 'FR' ? '\n- IMPORTANT: If the French word is a noun, the "word" field in the response MUST include the indefinite article (un/une). If the user entered just the noun without an article (e.g. "bus"), prepend it: "un bus". Always use un/une (not le/la) as they work for all nouns including those starting with a vowel (where le/la becomes l\').' : ''}
 - Return ONLY the JSON object, no other text`
 
   // Log API usage to the database

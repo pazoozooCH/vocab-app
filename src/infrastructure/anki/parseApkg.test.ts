@@ -308,13 +308,13 @@ async function buildStandardTestApkg(): Promise<Blob> {
       }),
       deckId: FR_5000_FR_DE.id,
     },
-    // 1 Vocab (reversed) note with VocabID
+    // 1 Vocab (reversed) note with VocabID — uses our export HTML format
     {
       guid: 'vocab-1',
       modelId: VOCAB_REVERSED_MODEL,
       fields: makeVocabFields(
-        'hello<br><ol><li>Hello, how are you?</li></ol>',
-        'hallo<br><ol><li>Hallo, wie geht es dir?</li></ol>',
+        'battery <i>[Law]</i><br><ol><li><b>Battery</b> is a criminal offense.</li><li>He was charged with <b>battery</b>.</li></ol>',
+        'Batterie <i>[Tech]</i>, Körperverletzung <i>[Law]</i><br><ol><li><b>Batterie</b> ist eine Straftat.</li><li>Er wurde wegen <b>Körperverletzung</b> angeklagt.</li></ol>',
         'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
       ),
       deckId: EN_DECK.id,
@@ -532,18 +532,24 @@ describe('parseApkg', () => {
       expect(note.vocabId).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890')
     })
 
-    it('parses word and translation from HTML fields', async () => {
+    it('preserves markdown formatting from our export', async () => {
       await getResult()
       const note = findNote('vocab-1')!
-      expect(note.word).toBe('hello')
-      expect(note.translations).toEqual(['hallo'])
+      expect(note.word).toBe('battery _[Law]_')
+      expect(note.translations).toEqual(['Batterie _[Tech]_, Körperverletzung _[Law]_'])
     })
 
-    it('parses sentences from HTML', async () => {
+    it('restores ordinal prefixes and bold in sentences', async () => {
       await getResult()
       const note = findNote('vocab-1')!
-      expect(note.sentencesSource).toEqual(['Hello, how are you?'])
-      expect(note.sentencesGerman).toEqual(['Hallo, wie geht es dir?'])
+      expect(note.sentencesSource).toEqual([
+        '1. **Battery** is a criminal offense.',
+        '2. He was charged with **battery**.',
+      ])
+      expect(note.sentencesGerman).toEqual([
+        '1. **Batterie** ist eine Straftat.',
+        '2. Er wurde wegen **Körperverletzung** angeklagt.',
+      ])
     })
   })
 

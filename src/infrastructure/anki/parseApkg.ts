@@ -339,8 +339,9 @@ function parseVocabReversed(
   const backHtml = fields[1]
   const vocabId = fields[2].trim() || null
 
-  const { word: sourceWord, sentences: sourceSentences } = parseHtmlField(frontHtml)
-  const { word: germanWord, sentences: germanSentences } = parseHtmlField(backHtml)
+  // Use markdown-preserving parser for our own exports
+  const { word: sourceWord, sentences: sourceSentences } = parseVocabHtmlField(frontHtml)
+  const { word: germanWord, sentences: germanSentences } = parseVocabHtmlField(backHtml)
 
   if (!sourceWord || !germanWord) return null
 
@@ -355,6 +356,44 @@ function parseVocabReversed(
     noteTypeName,
     vocabId,
   }
+}
+
+/**
+ * Parse a Vocab (reversed) HTML field back to markdown.
+ * Our export format: word<br><ol><li>sentence</li></ol>
+ * Converts <b>→**, <i>[...]→_[...]_, and restores "N. " ordinal prefixes.
+ */
+function parseVocabHtmlField(html: string): { word: string; sentences: string[] } {
+  if (!html.trim()) return { word: '', sentences: [] }
+
+  const brIndex = html.search(/<br\s*\/?\s*>/i)
+  let wordPart: string
+  let sentencePart: string
+
+  if (brIndex === -1) {
+    wordPart = html
+    sentencePart = ''
+  } else {
+    wordPart = html.slice(0, brIndex)
+    sentencePart = html.slice(brIndex)
+  }
+
+  const word = htmlToMarkdown(wordPart).trim()
+
+  const sentences: string[] = []
+  const liRegex = /<li>(.*?)<\/li>/gi
+  let match
+  let idx = 1
+  while ((match = liRegex.exec(sentencePart)) !== null) {
+    const text = htmlToMarkdown(match[1]).trim()
+    if (text) {
+      // Restore ordinal prefix that was stripped during export
+      sentences.push(`${idx}. ${text}`)
+      idx++
+    }
+  }
+
+  return { word, sentences }
 }
 
 function parseStandardNote(
@@ -431,6 +470,21 @@ function parseHtmlField(html: string): { word: string; sentences: string[] } {
 /** Strip all HTML tags from a string */
 export function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+}
+
+/**
+ * Convert our own HTML export format back to markdown.
+ * Reverses the mdToHtml conversion from generateApkg:
+ *   <b>text</b> → **text**
+ *   <i>[text]</i> → _[text]_
+ * Then strips remaining HTML tags.
+ */
+function htmlToMarkdown(html: string): string {
+  return html
+    .replace(/<b>(.*?)<\/b>/gi, '**$1**')
+    .replace(/<i>(\[.*?\])<\/i>/gi, '_$1_')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
 }
 
 // ---- Minimal ZIP reader (no external dependency) ----

@@ -83,6 +83,17 @@ src/
 - `npm run db:reset` is only for starting from scratch (e.g. after a fresh clone). It destroys all local data.
 - **Apply migrations to production**: use `npm run db:push` after testing locally.
 - The local migration run serves as a test for the production deployment.
+- **New tables in `public` need explicit grants.** Supabase no longer auto-exposes new `public` tables to the Data API (default for new projects since 2026-05-30; enforced on this existing project from 2026-10-30). Every migration that creates a table the app reads/writes via `supabase-js` must grant access explicitly, or PostgREST returns a `42501` error. Template:
+
+  ```sql
+  create table public.new_table (...);
+  alter table public.new_table enable row level security;
+
+  -- App is auth-only; add `grant select ... to anon;` only if anonymous access is needed.
+  grant select, insert, update, delete on public.new_table to authenticated, service_role;
+
+  create policy "..." on public.new_table for ... using (auth.uid() = user_id);
+  ```
 
 ### Deployment
 

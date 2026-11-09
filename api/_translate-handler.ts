@@ -9,6 +9,22 @@ function getAI(): GoogleGenAI {
   return ai
 }
 
+// Retry and fallback strategy, in order of preference:
+// 1. Try gemini-3.5-flash-lite, the successor of gemini-2.5-flash (shut down 2026-12-01)
+// 2. If 503 (overloaded), 429 (rate limit), or 404 (model retired), fall back to
+//    gemini-2.5-flash-lite, which is not deprecated
+// 3. 503 and 429 get 2 attempts per model with backoff (2s); 404 falls back at once
+// 4. 402 (prepaid credits depleted) fails at once: every model bills to the same project
+export const TRANSLATION_MODELS = ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite']
+
+/** The HTTP status of a Gemini SDK error (`ApiError`), if it has one. */
+function errorStatus(err: unknown): number | undefined {
+  if (err instanceof Error && 'status' in err && typeof err.status === 'number') {
+    return err.status
+  }
+  return undefined
+}
+
 export async function handleTranslate(
   body: { word?: string; language?: string; context?: string },
   authHeader: string | undefined,
@@ -89,13 +105,7 @@ Rules:
     }
   }
 
-  // Retry and fallback strategy for Gemini's free tier:
-  // 1. Try gemini-2.5-flash (better quality) with 2 attempts
-  // 2. If 503 (overloaded) or 429 (rate limit), fall back to gemini-2.5-flash-lite
-  //    which is faster, has higher free tier limits (1000 req/day vs 250), and lower demand
-  // 3. Each model gets 2 attempts with exponential backoff (2s, 4s)
-  // 4. Only return an error to the user if both models are exhausted
-  const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite']
+  const models = TRANSLATION_MODELS
   const MAX_RETRIES = 2
 
   for (const model of models) {
@@ -125,11 +135,34 @@ Rules:
         await logUsage(model, true)
         return { status: 200, body: result }
       } catch (err: unknown) {
-        const isRetryable =
-          err instanceof Error &&
-          'status' in err &&
-          ((err as { status: number }).status === 503 ||
-            (err as { status: number }).status === 429)
+        const status = errorStatus(err)
+        const errMsg = err instanceof Error ? err.message : 'Unknown error'
+
+        // Credits are billed per project, so no other model can succeed either
+        if (status === 402) {
+          console.error('Gemini credits depleted:', err)
+          await logUsage(model, false, errMsg)
+          return {
+            status: 503,
+            body: {
+              error:
+                'Gemini API credits are depleted. Top up the prepaid credits in AI Studio (ai.studio/projects).',
+            },
+          }
+        }
+
+        // The model was retired: retrying it is pointless, but the next one may work
+        if (status === 404) {
+          if (model !== models[models.length - 1]) {
+            console.warn(`${model} is not available, falling back to next model...`)
+            break
+          }
+          console.error('Translation error:', err)
+          await logUsage(model, false, errMsg)
+          return { status: 500, body: { error: 'Translation model is no longer available' } }
+        }
+
+        const isRetryable = status === 503 || status === 429
 
         // Retry with backoff if we have attempts left on this model
         if (isRetryable && attempt < MAX_RETRIES) {
@@ -154,7 +187,6 @@ Rules:
             body: { error: 'Translation service is temporarily busy. Please try again in a moment.' },
           }
         }
-        const errMsg = err instanceof Error ? err.message : 'Unknown error'
         await logUsage(model, false, errMsg)
         return { status: 500, body: { error: 'Translation failed' } }
       }

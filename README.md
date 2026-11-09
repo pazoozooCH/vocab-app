@@ -64,6 +64,10 @@ This app automates steps 2–5 into a single action.
 > **Why Gemini over Claude API?** Both produce excellent translations. Gemini was chosen because it offers a free tier, while the Anthropic API has no free tier and charges per token.
 >
 > **Gemini free tier limits** (as of March 2026): Without billing enabled, the free tier is very restrictive (~20 requests/day per model). To unlock the full free tier (250 req/day for Flash, 1000 req/day for Flash-lite), **enable billing** on your Google Cloud project at [console.cloud.google.com/billing](https://console.cloud.google.com/billing). You won't be charged as long as you stay within free limits — billing just needs to be *attached* to the project. Check your current quota at [console.cloud.google.com](https://console.cloud.google.com/) → APIs & Services → Gemini API → Quotas.
+>
+> **Models**: `/api/translate` tries `gemini-3.5-flash-lite` first and falls back to `gemini-2.5-flash-lite` when a model is overloaded (503), rate-limited (429), or retired (404). The list is `TRANSLATION_MODELS` in `api/_translate-handler.ts`.
+>
+> **Prepaid credits** (since 2026-03): a project with billing enabled may run on prepaid AI Studio credits. When they run out, Gemini answers 402 and the app shows "Gemini API credits are depleted". Top up in [AI Studio → Projects](https://ai.studio/projects); no redeploy is needed. Every model bills to the same project, so there is no fallback for this.
 
 ### MCP Servers
 

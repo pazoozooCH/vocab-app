@@ -63,11 +63,9 @@ This app automates steps 2–5 into a single action.
 
 > **Why Gemini over Claude API?** Both produce excellent translations. Gemini was chosen because it offers a free tier, while the Anthropic API has no free tier and charges per token.
 >
-> **Gemini free tier limits** (as of March 2026): Without billing enabled, the free tier is very restrictive (~20 requests/day per model). To unlock the full free tier (250 req/day for Flash, 1000 req/day for Flash-lite), **enable billing** on your Google Cloud project at [console.cloud.google.com/billing](https://console.cloud.google.com/billing). You won't be charged as long as you stay within free limits — billing just needs to be *attached* to the project. Check your current quota at [console.cloud.google.com](https://console.cloud.google.com/) → APIs & Services → Gemini API → Quotas.
+> **Keep the Gemini project on the free tier: do not link it to a billing account.** The app makes a handful of calls a day, far below the free limits (see [AI Studio → Rate limits](https://aistudio.google.com/rate-limit)), and both models below are free of charge on the free tier. Since 2026-03-23, linking a project to billing moves it to the paid Tier 1, which runs on **prepaid credits held by the billing account** and shared by every project on it. Credits expire 12 months after purchase. When the balance reaches $0, every key on every project of that billing account fails with HTTP 402, and the app shows "Gemini API credits are depleted". That is what broke translation in November 2026 (issue #1). The fix was to unlink the project from billing (Cloud Console → Billing → My projects), which takes effect immediately and needs no redeploy. Free-tier prompts may be used by Google to improve its products, which is harmless for vocabulary words.
 >
 > **Models**: `/api/translate` tries `gemini-3.5-flash-lite` first and falls back to `gemini-2.5-flash-lite` when a model is overloaded (503), rate-limited (429), or retired (404). The list is `TRANSLATION_MODELS` in `api/_translate-handler.ts`.
->
-> **Prepaid credits** (since 2026-03): a project with billing enabled may run on prepaid AI Studio credits. When they run out, Gemini answers 402 and the app shows "Gemini API credits are depleted". Top up in [AI Studio → Projects](https://ai.studio/projects); no redeploy is needed. Every model bills to the same project, so there is no fallback for this.
 
 ### MCP Servers
 
